@@ -43,49 +43,17 @@ def add_variable_to_master(depth,prob,prev_patterns_set,pattern_to_add,leaf,mast
         (i,v) = p.F[h]
         
         j = path[-h-1]
-        
-        if "rho_" + str(j) + "_" + str(i) + "_" + str(v) not in prob.variables.get_names(): #add rho if it is a new one
-                    
-            var_names.append("rho_" + str(j) + "_" + str(i) + "_" + str(v))
-            
-            var_types += "C"
-    
-            var_lb.append(-cplex.infinity)
-        
-            var_ub.append(cplex.infinity)
-        
-            var_obj.append(0)
-            
-            my_columns.append([[],[]])
-            
-            for l in range(num_leafs):
-            
-                my_columns[1][0].append("constraint_3_" + str(l) + "_" + str(j)+"_" + str(i)+"_" + str(v))
-        
-                my_columns[1][1].append(-1)
-                        
-            # add empty constraints
-            
-            for l in range(num_leafs):
-                
-                col_names = []
-                
-                col_values = []
-                            
-                row_names=["constraint_3_" + str(l) + "_" + str(j)+"_" + str(i)+"_" + str(v)]
-            
-                row_right_sides = [0]
-            
-                row_values=[[col_names,col_values]]
-    
-                row_senses = "E"
-                
-                prob.linear_constraints.add(lin_expr = row_values, senses = row_senses, rhs = row_right_sides, names = row_names)
-                                
+                                          
         my_columns[0][0].append("constraint_3_" + str(leaf) + "_" + str(j)+"_" + str(i)+"_" + str(v))
         
         my_columns[0][1].append(1)
-    
+        
+    for r in p.R:
+        
+        my_columns[0][0].append("row_constraint_"+str(r))
+        
+        my_columns[0][1].append(1)
+           
     prob.variables.add(obj = var_obj, lb = var_lb, ub = var_ub, types = var_types, columns = my_columns, names = var_names)
             
     prob.set_problem_type(0)
@@ -93,7 +61,7 @@ def add_variable_to_master(depth,prob,prev_patterns_set,pattern_to_add,leaf,mast
     return prob
     
     
-def create_variables_CG(depth,patterns_set,master_thresholds):
+def create_variables_CG(depth,patterns_set,C_set):
     
     var_value = 0
 
@@ -108,22 +76,28 @@ def create_variables_CG(depth,patterns_set,master_thresholds):
     var_obj = []
 
     num_leafs = 2**depth
+    
+    num_nodes = num_leafs - 1
 
     # On the paper: rho_{i,j,v}
+    
+    for j in range(num_nodes):
 
-    for (j,i,v) in master_thresholds:
-
-        var_names.append("rho_" + str(j) + "_" + str(i) + "_" + str(v))
-
-        var_types = var_types + "C"
-
-        var_lb.append(-cplex.infinity)
-
-        var_ub.append(cplex.infinity)
-
-        var_obj.append(0)
-
-        var_value = var_value + 1
+        for i in range(len(C_set)):
+            
+            for v in range(len(C_set[i])):
+    
+                var_names.append("rho_" + str(j) + "_" + str(i) + "_" + str(v))
+        
+                var_types = var_types + "C"
+        
+                var_lb.append(-cplex.infinity)
+        
+                var_ub.append(cplex.infinity)
+        
+                var_obj.append(0)
+        
+                var_value = var_value + 1
 
     # On the paper : x_{p,l}
     
@@ -147,7 +121,7 @@ def create_variables_CG(depth,patterns_set,master_thresholds):
     return var_names, var_types, var_lb, var_ub, var_obj
 
 
-def create_rows_CG(depth,patterns_set,master_thresholds):
+def create_rows_CG(depth,patterns_set,master_thresholds,C_set):
 
     row_names = []
 
@@ -174,44 +148,70 @@ def create_rows_CG(depth,patterns_set,master_thresholds):
         row_values.append([col_names,col_values])
 
         row_senses = row_senses + "E"
-    
-    for l in range(num_leafs): #constraint (3)
         
-        for (j,i,v) in master_thresholds:
+    for l in range(num_leafs):
+        
+        parents = get_leaf_parents(l,num_nodes)
+    
+        for j in parents:
                 
-                d = get_depth(j,num_nodes) - 1
+            for i in range(len(C_set)):
                 
-                col_names = ["pattern_"+str(p)+"_"+str(l) for p in range(len(patterns_set[l])) if patterns_set[l][p].F[d]==(i,v)]
-                
-                col_values = [1 for p in range(len(patterns_set[l])) if patterns_set[l][p].F[d]==(i,v)]
-                
-                col_names.append("rho_" + str(j) + "_" + str(i) + "_" + str(v))
-                
-                col_values.append(-1)
-                
-                row_names.append("constraint_3_" + str(l) + "_" + str(j)+"_" + str(i)+"_" + str(v))
-                
-                row_right_sides.append(0)
-                
-                row_values.append([col_names,col_values])
+                for v in range(len(C_set[i])):
+                    
+                    if (j,i,v) in master_thresholds:
+                    
+                        d = get_depth(j,num_nodes) - 1
+                        
+                        col_names = ["pattern_"+str(p)+"_"+str(l) for p in range(len(patterns_set[l])) if patterns_set[l][p].F[d]==(i,v)]
+                        
+                        col_values = [1 for p in range(len(patterns_set[l])) if patterns_set[l][p].F[d]==(i,v)]
+                        
+                    else:
+                        
+                        col_names, col_values = [], []
+                    
+                    col_names.append("rho_" + str(j) + "_" + str(i) + "_" + str(v))
+                    
+                    col_values.append(-1)
+                    
+                    row_names.append("constraint_3_" + str(l) + "_" + str(j)+"_" + str(i)+"_" + str(v))
+                    
+                    row_right_sides.append(0)
+                    
+                    row_values.append([col_names,col_values])
+    
+                    row_senses = row_senses + "E"
+                    
+    for r in range(get_data_size()):
+        
+        col_names = ["pattern_"+str(p)+"_"+str(l) for l in range(num_leafs) for p in range(len(patterns_set[l])) if r in patterns_set[l][p].R]
+        
+        col_values = [1 for l in range(num_leafs) for p in range(len(patterns_set[l])) if r in patterns_set[l][p].R]
+        
+        row_names.append("row_constraint_"+str(r))
+                    
+        row_right_sides.append(1)
+        
+        row_values.append([col_names,col_values])
 
-                row_senses = row_senses + "E"
+        row_senses = row_senses + "E"
                                     
                 
     return row_names, row_values, row_right_sides, row_senses
 
 
-def construct_master_problem(depth,patterns_set,master_thresholds):
+def construct_master_problem(depth,patterns_set,master_thresholds,C_set):
         
     prob = cplex.Cplex()
     
     prob.objective.set_sense(prob.objective.sense.maximize)
 
-    var_names, var_types, var_lb, var_ub, var_obj = create_variables_CG(depth,patterns_set,master_thresholds)
+    var_names, var_types, var_lb, var_ub, var_obj = create_variables_CG(depth,patterns_set,C_set)
     
     prob.variables.add(obj = var_obj, lb = var_lb, ub = var_ub, types = var_types, names = var_names)
 
-    row_names, row_values, row_right_sides, row_senses = create_rows_CG(depth,patterns_set,master_thresholds)
+    row_names, row_values, row_right_sides, row_senses = create_rows_CG(depth,patterns_set,master_thresholds,C_set)
     
     prob.linear_constraints.add(lin_expr = row_values, senses = row_senses, rhs = row_right_sides, names = row_names)
             

@@ -7,11 +7,12 @@ Created on Tue Apr 10 13:44:53 2018
 
 from RMPSolver import add_column, solveRMP, create_new_master, display_prob_lite
 from nodes_external_management import give_solution_type, hash_pattern
-from PricingSolver import solve_pricing
+from PricingSolver import solve_pricing, avoid_method, init_pricing_probs
 from learn_tree_funcs import get_leaf_parents
 import time
 import matplotlib.pyplot as plt
-from copy import deepcopy as dc
+from heuristics import genpatterns_singlevalues, genpatterns_random, update_pool, genpatterns_random_trees
+import numpy as np
 
 
 def obtain_depth(d):
@@ -35,16 +36,32 @@ class BaP_Node:
         
     def explore(self,UB,C_set): #do CG until the master problem is solved
         
-        plt.figure()
-                
+        init_pricing_probs(depth,C_set)
+        """
+        plt.figure(1)
+        
+        plt.ylim(ymax=800)
+        
+        plt.title("Master objective value")
+        
+        plt.figure(2)
+        
+        plt.title("Reduced costs")
+        
+        plt.figure(3)
+        
+        plt.title("Time to solve master")
+               
         plt.show()
-                        
-        #print(self.segments_set)
-                
+        """                               
         convergence = False
-                
+        
+        #○avoid_method(depth)
+        
+        #self.prob.write('here.lp','lp')
+                        
         solveRMP(self.prob)
-                                                                
+                                                                        
         if give_solution_type(self.prob) == 'infeasible':
                         
             self.solution_type = 'infeasible'
@@ -56,30 +73,78 @@ class BaP_Node:
         
         count_iter=1
                                 
-        red_cost = float('-inf')
+        red_cost = float('+inf')
+        
+        go_pricing, bad_pool = False, False
+        
+        interesting_leaves = [l for l in range(2**depth)]
         
         while not convergence:
             
             c=time.time()
-                                    
-            solveRMP(self.prob)
-                                    
-            print(count_iter,"Time MP :",time.time()-c)
                                                 
-            pricing_method = 1
+            solveRMP(self.prob)
                         
-            b=time.time()
+            t=time.time()-c
                                     
-            patterns_to_be_added, convergence, red_cost = solve_pricing(depth,
-            self.prob,self.patterns_set,self.branch_var,
-            self.branch_index,self.ID,self.master_thresholds,C_set,pricing_method)
+            print(count_iter,"Time MP :",t)
             
-            print(count_iter,"Time pricing :",time.time()-b)
+            #print("RC of initial solution: "+str(sum([self.prob.solution.get_reduced_costs("pattern_0_"+str(l)) for l in range(2**depth)])))
+            """
+            plt.figure(3)
             
+            plt.scatter(count_iter,t,color='r')
+            
+            plt.pause(0.0001)
+            """                                   
+            pricing_method = 1
+            
+            if go_pricing>9 or red_cost<0.001:# or count_iter%15==0 or(count_iter>500 and count_iter%5==0):
+                        
+                b=time.time()
+                                    
+                patterns_to_be_added, convergence, red_cost, interesting_leaves = solve_pricing(depth,
+                self.prob,self.patterns_set,self.branch_var,
+                self.branch_index,self.ID,self.master_thresholds,C_set,pricing_method)
+            
+                print(count_iter,"Time pricing :",time.time()-b)
+                
+                go_pricing, bad_pool = 0, True
+                
+            else:
+                
+                a=time.time()
+                
+                if count_iter<0:
+                
+                    patterns_to_be_added, go_pricing = genpatterns_random_trees(depth,self.prob,C_set)
+                    
+                else:
+                
+                    if count_iter==1 or bad_pool:
+                    
+                        patterns_to_be_added, bad_pool = genpatterns_random(depth,self.prob,C_set,interesting_leaves)
+                                                
+                        go_pricing+=1
+                        
+                    else:
+                        
+                        patterns_to_be_added, bad_pool = update_pool(depth,self.prob,C_set,interesting_leaves)
+                        
+                        go_pricing=0
+                
+                print('Pool generation time: '+str(time.time()-a))
+                
+                #input()
+            """    
+            plt.figure(1)
+            
+            plt.ylim(ymax=800)
+                
             plt.scatter(count_iter,self.prob.solution.get_objective_value(),color='g')
             
-            plt.pause(0.01)
-            
+            plt.pause(0.0001)
+            """
             if float(self.prob.solution.get_objective_value()) >= UB: #check if it is useful to continue
                 
                 self.solution_value = self.prob.solution.get_objective_value()
@@ -88,7 +153,7 @@ class BaP_Node:
                 
                 return
             
-            if count_iter%100==0:
+            if count_iter%10==0:
             
                 print("Current solution value "+str(self.prob.solution.get_objective_value()))
             
@@ -96,41 +161,53 @@ class BaP_Node:
                 
                 #check_unicity(self.segments_set)
                         
-                for p in self.patterns_set[0]:
+                #for p in self.patterns_set[0]:
                                                
-                    print(p)
-                
-                #print(patterns_to_be_added)
+                    #print(p)
+                    
+                #print(patterns_to_be_added[0])
                 
                 #print("Master thresholds",self.master_thresholds)
                 
                 #display_prob_lite(self.prob,"dual")
-                
-                #display_prob_lite(self.prob,"primal")
                 
                 #print(self.prob.solution.get_reduced_costs())
                 
                 #for i in self.prob.variables.get_names():
                 
                     #print(i,self.prob.solution.get_reduced_costs(i))
-                
-                #display_RMP_solution_dual(depth,self.prob,count_iter)
-                
-                #display_RMP_solution_primal(depth,self.prob,count_iter,self.segments_set)
-                
+                                                
                 #print(self.prob.variables.get_num())
                 
-                input()
+                #input()
+                
+            if count_iter%5000==0:
+                
+                a=input()
+                
+                if a =="stop":
+                    
+                    return
                                                 
             a=time.time()
                         
             #print("Full set",self.segments_set)
                                     
             #print("Full set after addition",self.segments_set)
-                        
+            """
+            if(sum([len(self.patterns_set[l]) for l in range(2**depth)]) > 7000):
+                
+                print('Cleaning')
+                
+                self.clean(C_set)
+            """            
             if not convergence:
-                                                
+                
+                a=time.time()
+                                                                
                 self.add_patterns(patterns_to_be_added,True)
+                
+                print('Time add columns: '+str(time.time()-a))
                                                                     
             print(count_iter,"Time MP construction :",time.time()-a)
             
@@ -190,7 +267,35 @@ class BaP_Node:
                             
                             self.master_thresholds.append((j,i,v))
                         
-    def create_children_by_branching(self,var,index): #TODO;
+    def clean(self,C_set):
+        
+        new_patterns_set = [[] for l in range(len(self.patterns_set))]
+        
+        names = np.array(self.prob.variables.get_names())
+        
+        values = np.array(self.prob.solution.get_values())
+        
+        idx = np.where(values > 0.001)[0]
+                
+        names, values = names[idx], values[idx]
+                
+        for n in names:
+                        
+            if "pattern" in n:
+                
+                tmp = n.split("_")
+                
+                l = int(tmp[-1])
+                
+                p = int(tmp[-2])
+                
+                new_patterns_set[l].append(self.patterns_set[l][p])
+                
+        self.patterns_set = new_patterns_set
+        
+        self.prob = create_new_master(depth,self.patterns_set,self.master_thresholds,C_set)
+        
+        self.prob.write('here.lp','lp')
         
         return
                 

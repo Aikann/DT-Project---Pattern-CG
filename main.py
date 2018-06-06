@@ -8,7 +8,8 @@ Created on Tue Apr 10 13:09:31 2018
 from BBSolver import BBSolver
 import getopt
 import sys
-from Instance import create_instance, create_first_solution, initialize_global_values, basic_patterns, compute_C_set
+from Instance import create_instance, create_first_solution, initialize_global_values, empty_patterns, restricted_C_set
+from pattern import create_FT
 
 def main(argv):
         
@@ -30,24 +31,31 @@ def main(argv):
 
             inputdepth = int(arg)
             
-    create_instance(inputfile)
-                   
-    TARGETS = create_first_solution(inputdepth) #only return targets for the time being
-    
-    C_set = compute_C_set()
+    print('Initializing...')
             
-    patterns_set, master_thresholds = basic_patterns(inputdepth,C_set)
-                
-    best_solution_value = 0
+    create_instance(inputfile)
+                                               
+    patterns_set, master_thresholds, TARGETS, C_set = create_first_solution(inputdepth)
     
+    #C_set, master_thresholds = restricted_C_set(C_set,patterns_set)
+    
+    #patterns_set, master_thresholds, TARGETS, C_set = empty_patterns(inputdepth)
+    
+    create_FT(C_set)
+                
+    best_solution_value = sum([patterns_set[l][0].c for l in range(2**inputdepth)])
+    """
     for l in range(len(patterns_set)):
         
         for p in patterns_set[l]:
             
             print(p)
-            
+    """
     initialize_global_values(TARGETS,inputdepth,C_set)
+    
+    print('Initialization done')
+    print('Constructing problems...')
                         
     return BBSolver(TARGETS, patterns_set, best_solution_value, inputdepth, C_set, master_thresholds)
     
-root=main(["-fIndiansDiabetes.csv","-d 1"])
+root=main(["-firis.csv","-d 2"])

@@ -16,7 +16,7 @@ chosen_method = "HORIZONTAL_SEARCH"
 
 def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_thresholds):
     
-    prob=create_new_master(inputdepth,patterns_set,master_thresholds)
+    prob=create_new_master(inputdepth,patterns_set,master_thresholds,C_set)
     
     H = [[0] for l in range(len(patterns_set))]
     
@@ -28,17 +28,17 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
                             
     root_node=BaP_Node(patterns_set,prob,"",None,H,[],[],master_thresholds) #construct root node
     
-    best_ID = 'Solution provided by warm start'
+    best_ID = 'Optimal solution found at root node'
         
     a=time.time()
     
-    root_node.explore(3000,C_set)
+    root_node.explore(30000,C_set)
     
-    print("Full time : ",time.time()-a)
+    print("Full time : "+str(time.time()-a))
     
-    print("Upper bound at root node : ",root_node.prob.solution.get_objective_value())
+    print("Upper bound at root node : "+str(root_node.prob.solution.get_objective_value()))
     
-    return root_node
+    print("Number of columns: "+str(sum([len(root_node.patterns_set[l]) for l in range(2**inputdepth)])))
     
     UB = root_node.prob.solution.get_objective_value()
     
@@ -58,17 +58,23 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
     
     #return root_node
     
+    if root_node.solution_type == 'integer':
+        
+        print('Integer for LP')
+        
+        best_solution_value = UB
+    
     if root_node.solution_type == 'integer' or (UB==best_solution_value):
         
-        print("Best solution: ",best_solution_value)
+        print("Best solution: "+str(best_solution_value))
     
-        print("Best_ID: ",best_ID)
+        print("Best_ID: "+str(best_ID))
     
         print("Total time :"+str(time.time() - a))
         
         return root_node
     
-    
+    return root_node
     
     
     

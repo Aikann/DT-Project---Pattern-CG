@@ -8,7 +8,8 @@ Created on Tue Apr 17 11:27:19 2018
 from learn_tree_funcs import get_data_size, get_num_features, get_leaf_parents, get_target
 import random
 from pattern import pattern
-from collections import Counter
+import numpy as np
+import time
 
 """HASH FUNCTIONS"""
 
@@ -20,48 +21,46 @@ def init_rand_hash(depth,num_features,C_set):
 
 def hash_pattern(pattern):
         
-    return sum([rand_hash[h][pattern.F[h][0]][pattern.F[h][1]] for h in range(len(pattern.F))]) + 3*pattern.leaf +2.2568*pattern.target
+    return sum([rand_hash[h][pattern.F[h][0]][pattern.F[h][1]] for h in range(len(pattern.F))]) + 3*pattern.leaf +2.2568*pattern.target + 15.256*len(pattern.R)
 
 
 
 """TOOL FUNCTIONS"""
 
+from matplotlib import colors as mcolors
 
-def color_leaf(l):
+
+colors = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
+by_hsv = sorted((tuple(mcolors.rgb_to_hsv(mcolors.to_rgba(color)[:3])), name)
+                for name, color in colors.items())
+sorted_names = [name for hsv, name in by_hsv]
+
+
+def color_leaf(l,t,depth):
     
-    if l==0:
-        
-        return 'b'
+    num_leafs = 2**depth
     
-    elif l==1:
-    
-        return 'r'
-    
-    elif l==2:
-    
-        return 'y'
-    
-    else:
-        
-        return 'm'
+    return colors[sorted_names[4*l + 4*num_leafs*t]]
       
 
 """EXTRACTING PATTERNS FROM THE SOLUTION AND THE SOLUTION TYPE"""   
 
 
 def extract_pattern_pricing(pricing_prob,leaf,depth,C_set):
-    
+            
     num_features = get_num_features()
     
-    data_size = get_data_size()
+    R, F = [], [0 for h in range(depth)]
     
-    R, F = [], []
+    """
     
-    for r in range(data_size):
+    Rbis, Fbis = [], []
+    
+    for r in range(get_data_size()):
     
         if "row_"+str(r) in pricing_prob.variables.get_names() and 0.99 <= float(pricing_prob.solution.get_values("row_"+str(r))) <= 1.01:
         
-            R.append(r)
+            Rbis.append(r)
                 
     for h in range(depth):
     
@@ -71,15 +70,49 @@ def extract_pattern_pricing(pricing_prob,leaf,depth,C_set):
                 
                 if 0.99 <= float(pricing_prob.solution.get_values("u_"+str(i)+"_"+str(h)+"_"+str(v))) <= 1.01:
                     
-                    F.append((i,v))
+                    Fbis.append((i,v))
                     
-    targets = [get_target(r) for r in R]
+    """
+                
+    sol=pricing_prob.solution.get_values(depth*sum([len(C_set[i]) for i in range(num_features)]),pricing_prob.variables.get_num()-1)
         
-    pred = Counter(targets).most_common(1)[0][0]
-            
-    c = sum([1 for r in R if get_target(r)==pred])
-                    
-    p = pattern(leaf,F,c,R,pred)
+    sol=np.array(sol)
+    
+    index = np.where(sol > 0.99)[0]
+    
+    for idx in index:
+    
+        var_name = pricing_prob.variables.get_names(depth*sum([len(C_set[i]) for i in range(num_features)])+int(idx))
+                
+        tmp=var_name.split("_")
+        
+        row = int(tmp[-1])
+        
+        R.append(row)
+
+    sol=pricing_prob.solution.get_values(0,depth*sum([len(C_set[f]) for f in range(num_features)])-1)
+                
+    sol=np.array(sol)
+        
+    index = np.where(sol > 0.99)[0]
+        
+    for idx in index:
+                
+        var_name = pricing_prob.variables.get_names(int(idx))
+        
+        tmp=var_name.split("_")
+        
+        (i,v) = (int(tmp[-3]),int(tmp[-1]))
+        
+        F[int(tmp[-2])] = (i,v)
+        
+    #print(F,Fbis)
+        
+    #assert R==Rbis
+    
+    #assert F==Fbis
+                        
+    p = pattern(leaf,F,0,R,0) #target and score will be computed in the next function
             
     return p
             

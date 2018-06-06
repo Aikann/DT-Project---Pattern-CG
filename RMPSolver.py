@@ -7,9 +7,9 @@ Created on Wed Apr 18 10:25:53 2018
 
 from cplex_problems_master import construct_master_problem, add_variable_to_master
 
-def create_new_master(depth,patterns_set,master_thresholds):
+def create_new_master(depth,patterns_set,master_thresholds,C_set):
     
-    return construct_master_problem(depth,patterns_set,master_thresholds)
+    return construct_master_problem(depth,patterns_set,master_thresholds,C_set)
 
 def solveRMP(prob):
     
@@ -25,7 +25,9 @@ def display_prob_lite(prob,side):
         
         for i in prob.variables.get_names():
             
-            print(i, prob.solution.get_values(i))
+            if prob.solution.get_values(i) > 0.001:
+            
+                print(i, prob.solution.get_values(i))
             
     else:
         
