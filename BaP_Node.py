@@ -36,27 +36,31 @@ class BaP_Node:
         
     def explore(self,UB,C_set): #do CG until the master problem is solved
         
+        start=time.time()
+        
         init_pricing_probs(depth,C_set)
         """
         plt.figure(1)
         
-        plt.ylim(ymax=800)
+        plt.ylim(ymax=650)
         
-        plt.title("Master objective value")
+        plt.ylim(ymin=550)
+        
+        plt.title("Master objective value as a function of number of iterations")
         
         plt.figure(2)
         
-        plt.title("Reduced costs")
+        plt.title("Reduced costs as a function of number of iterations")
         
         plt.figure(3)
         
-        plt.title("Time to solve master")
+        plt.title("Time to solve master (s) as a function of number of columns")
                
         plt.show()
-        """                               
+        """                           
         convergence = False
         
-        #○avoid_method(depth)
+        avoid_method(depth)
         
         #self.prob.write('here.lp','lp')
                         
@@ -99,7 +103,7 @@ class BaP_Node:
             """                                   
             pricing_method = 1
             
-            if go_pricing>9 or red_cost<0.001:# or count_iter%15==0 or(count_iter>500 and count_iter%5==0):
+            if go_pricing>1 or red_cost<0.001:# or count_iter%15==0 or(count_iter>500 and count_iter%5==0):
                         
                 b=time.time()
                                     
@@ -136,10 +140,10 @@ class BaP_Node:
                 print('Pool generation time: '+str(time.time()-a))
                 
                 #input()
-            """    
+            """   
             plt.figure(1)
             
-            plt.ylim(ymax=800)
+            plt.ylim(ymax=650)
                 
             plt.scatter(count_iter,self.prob.solution.get_objective_value(),color='g')
             
@@ -181,16 +185,18 @@ class BaP_Node:
                 
                 #input()
                 
-            if count_iter%5000==0:
+            if (time.time()-start)>=30*60:
                 
                 a=input()
                 
                 if a =="stop":
                     
+                    self.solution_value = self.prob.solution.get_objective_value()
+                    self.solution = self.prob.solution.get_values()
+                    self.solution_type = give_solution_type(self.prob)
+                    
                     return
-                                                
-            a=time.time()
-                        
+                                                                        
             #print("Full set",self.segments_set)
                                     
             #print("Full set after addition",self.segments_set)
@@ -208,10 +214,7 @@ class BaP_Node:
                 self.add_patterns(patterns_to_be_added,True)
                 
                 print('Time add columns: '+str(time.time()-a))
-                                                                    
-            print(count_iter,"Time MP construction :",time.time()-a)
-            
-            
+                                                                                
             count_iter=count_iter+1
             
         

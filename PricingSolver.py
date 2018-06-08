@@ -99,7 +99,7 @@ def solve_pricing(depth,prob,patterns_set,branch_var,branch_index,ID,master_thre
         for l in range(num_leafs):
             
             for t in range(get_num_targets()):
-                """
+                
                 if avoid[l][t] > 10:
                     
                     avoid[l][t] = 0
@@ -109,17 +109,17 @@ def solve_pricing(depth,prob,patterns_set,branch_var,branch_index,ID,master_thre
                     avoid[l][t] += 1
                     
                 else:
-                """
-                pattern, value = solve_pricing_given_leaf_and_target(depth,prob,l,t,branch_var,branch_index,ID,master_thresholds,C_set)
                 
-                patterns_to_be_added.append(pattern)
-                
-                obj_values.append(value)
-                
-                if value > 0.001:
+                    pattern, value = solve_pricing_given_leaf_and_target(depth,prob,l,t,branch_var,branch_index,ID,master_thresholds,C_set)
                     
-                    interesting_leaves.append(l)
-                    """
+                    patterns_to_be_added.append(pattern)
+                    
+                    obj_values.append(value)
+                    
+                    if value > 0.001:
+                        
+                        interesting_leaves.append(l)
+                        
                     if value <= 0.001:
                         
                         avoid[l][t] += 1
@@ -127,22 +127,22 @@ def solve_pricing(depth,prob,patterns_set,branch_var,branch_index,ID,master_thre
                     else:
                         
                         avoid[l][t] = 0
-                    """
-                    """
-                    plt.figure(2)
-                    if -500 < value:
-                    
-                        plt.scatter(count_iter,value,color=color_leaf(l,t,depth))
-                    
-                        plt.pause(0.0001)
-                    """                
-                print("Reduced cost for leaf "+str(l)+", target index "+str(t)+" :",str(value))
+                        
+                        """
+                        plt.figure(2)
+                        if -500 < value:
+                        
+                            plt.scatter(count_iter,value,color=color_leaf(l,t,depth))
+                        
+                            plt.pause(0.0001)
+                        """                
+                    print("Reduced cost for leaf "+str(l)+", target index "+str(t)+" :",str(value))
                     
                     #print(pattern)
                 
                 cv_proof=True
-        """
-        if np.all(avoid < 1): #check if the pricing has been solved for every (leaf,target)
+        
+        if np.all(avoid < 2): #check if the pricing has been solved for every (leaf,target)
             
             cv_proof = True
             
@@ -153,6 +153,6 @@ def solve_pricing(depth,prob,patterns_set,branch_var,branch_index,ID,master_thre
             if max(obj_values) < 0.01: #if it seems we converged
                 
                 avoid.fill(0) #solve all pricings at the next iteration
-        """              
+                      
     return patterns_to_be_added, ((max(obj_values) < 0.001) and (cv_proof)), max(obj_values), interesting_leaves
 

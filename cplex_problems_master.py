@@ -53,7 +53,7 @@ def add_variable_to_master(depth,prob,prev_patterns_set,pattern_to_add,leaf,mast
         my_columns[0][0].append("row_constraint_"+str(r))
         
         my_columns[0][1].append(1)
-           
+            
     prob.variables.add(obj = var_obj, lb = var_lb, ub = var_ub, types = var_types, columns = my_columns, names = var_names)
             
     prob.set_problem_type(0)

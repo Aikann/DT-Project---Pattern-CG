@@ -149,7 +149,7 @@ def run_tree():
 
 #run_tree()
 
-def learnTrees_and_return_patterns(depth):
+def learnTrees_and_return_patterns(depth,sample=False):
     global dt
     global features
     global targets
@@ -161,7 +161,10 @@ def learnTrees_and_return_patterns(depth):
     print 'features:', features
     y=df[target_feature]
     X=df[features]
-    X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.0,random_state=0)
+    if not sample:
+        X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.0,random_state=0)
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.0,train_size=0.9,random_state=None)
     #dt = DecisionTreeRegressor(max_depth=depth)#, min_samples_split=20, random_state=99)
     dt = DecisionTreeClassifier(max_depth=depth)#, min_samples_split=20, random_state=99)
     dt.fit(X_train,y_train)

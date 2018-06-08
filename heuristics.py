@@ -118,9 +118,9 @@ def genpatterns_random(depth,master_prob,C_set,interesting_leaves):
         l = interesting_leaves[int(rdn*len(interesting_leaves))]
                         
         p=pattern(l,F,0,[],0)
-                                
+                                        
         p.add_missing_rows(depth,C_set)
-                                
+                                        
         p.pred_target() #compute target
         
         ha = hash_pattern(p)
@@ -223,14 +223,15 @@ def update_pool(depth,master_prob,C_set,interesting_leaves):
     from BaP_Node import count_iter
     plt.scatter(count_iter,max(red_costs),color='k')
     plt.pause(0.0001)
-    """                            
-    return [sorted_patterns[p] for p in range(int(nbr_it/2)) if red_costs[p]>0.001], max(red_costs) < 0.01
+    """              
+
+    return [sorted_patterns[p] for p in range(int(nbr_it/2)) if p<len(sorted_patterns) and red_costs[p]>0.001], max(red_costs) < 0.01
 
 def gen_Fvector_random(depth,C_set):
     
     global count
-    
-    num_features = get_num_features()
+        
+    non_empty_features = [i for i in range(len(C_set)) if len(C_set[i])>0]
     
     F = [0 for h in range(depth)]
     
@@ -238,7 +239,7 @@ def gen_Fvector_random(depth,C_set):
         
         rdn, count = random_numbers[count], count + 1
         
-        i = int(rdn*num_features)
+        i = non_empty_features[int(rdn*len(non_empty_features))]
         
         rdn, count = random_numbers[count], count + 1
         

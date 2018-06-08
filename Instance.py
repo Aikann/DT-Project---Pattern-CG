@@ -156,9 +156,11 @@ def convert_thresholds_to_index(master_thresholds,C_set):
         
         new_v = 0
         
-        while v >= (C_set[i][new_v] + C_set[i][new_v+1])/2:
+        if len(C_set[i])!=1: #if not a categorical feature
+        
+            while v >= (C_set[i][new_v] + C_set[i][new_v+1])/2 and new_v < len(C_set[i]):
             
-            new_v += 1
+                new_v += 1
             
         master_thresholds[m] = (j,i,new_v)
     
@@ -246,11 +248,97 @@ def restricted_C_set(C_set,patterns_set):
             
             F[h] = (i,v2)
             
+            print(l,h,i,v2)
+            
             new_MT.append((parents[h],i,v2))
             
     print('Unique values: '+str(sum([len(new_C_set[z]) for z in range(num_features)])))
             
     return new_C_set, new_MT
+
+def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set using information from CART trees
+    
+    num_features = get_num_features()
+    
+    new_C_set = [[] for i in range(num_features)]
+    
+    new_MT = []
+    
+    stop=0
+    
+    while stop<20: #compute interesting thresholds for root node only
+        
+        dt, TARGETS = tr.learnTrees_and_return_patterns(depth,sample=True)
+                
+        tree_thresholds = get_feature_and_thresholds(dt,depth)
+        
+        print(tree_thresholds)
+        
+        convert_thresholds_to_index(tree_thresholds,C_set)
+        
+        print(tree_thresholds)
+        
+        #input()
+        
+        for j in range(2**depth -1):
+            
+            if j==(2**(depth -1) -1):
+        
+                triple = next(x for x in tree_thresholds if x[0]==j)
+                
+                i, v = triple[1], triple[2]
+                
+                if C_set[i][v] not in new_C_set[i]:
+                
+                    new_C_set[i].append(C_set[i][v])
+                    
+                    stop=0
+                    
+                else:#if j==(2**(depth-1) - 1):
+                    
+                    stop+=1
+        
+    num_leafs = len(patterns_set)
+        
+    for l in range(num_leafs):
+        
+        F = patterns_set[l][0].F
+        
+        for (i,v) in F:
+            
+            if C_set[i][v] not in new_C_set[i]:
+                
+                new_C_set[i].append(C_set[i][v])
+                
+    for i in range(num_features):
+        
+        new_C_set[i].sort()
+        
+    for l in range(num_leafs):
+        
+        F = patterns_set[l][0].F
+        
+        parents = get_leaf_parents(l,num_leafs-1)
+        parents.reverse()
+        
+        for h in range(len(F)):
+            
+            (i,v) = F[h]
+            
+            v2 = new_C_set[i].index(C_set[i][v])
+            
+            F[h] = (i,v2)
+                        
+            new_MT.append((parents[h],i,v2))
+            
+    print('Unique values: '+str(sum([len(new_C_set[z]) for z in range(num_features)])))
+    
+    print(new_C_set)
+    
+    input()
+    
+    return new_C_set, new_MT
+        
                     
 def empty_patterns(depth):
     

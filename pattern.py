@@ -25,11 +25,11 @@ def create_FT(C_set):
                 
                 if get_feature_value(r,i) <= C_set[i][v]:
                     
-                    FT[r][i].append(0)
+                    FT[r][i].append('0')
                     
                 else:
                     
-                    FT[r][i].append(1)
+                    FT[r][i].append('1')
                                             
 class pattern:
     
@@ -46,7 +46,7 @@ class pattern:
         
         return "Ending leaf: " + str(self.leaf) +"\nF_vector: " + str(self.F) + "\nPredicted target index: " + str(self.target) + "\nCorrect predictions: " +str(self.c) + "\nRows: " +str(self.R)
     
-    def add_missing_rows2(self,depth,C_set): #compute the exact pattern given the one provided by the pricing
+    def add_missing_rows(self,depth,C_set): #compute the exact pattern given the one provided by the pricing
     
         data_size = get_data_size()
                 
@@ -61,7 +61,7 @@ class pattern:
                 for h in range(depth):
                     
                     (i,v) = self.F[h]
-                                        
+                                                            
                     if get_feature_value(r,i) <= C_set[i][v] and bin_l[h]=='1':
                         
                         incl = False
@@ -74,7 +74,7 @@ class pattern:
                     
                     self.R.append(r)
                     
-    def add_missing_rows(self,depth,C_set): #compute the exact pattern given the one provided by the pricing
+    def add_missing_rows2(self,depth,C_set): #compute the exact pattern given the one provided by the pricing
             
         data_size = get_data_size()
                 
@@ -90,7 +90,7 @@ class pattern:
                     
                     (i,v) = self.F[h]
                                                             
-                    if int(bin_l[h])!=FT[r][i][v]:
+                    if bin_l[h]!=FT[r][i][v]:
                         
                         incl = False
                                                                                                 

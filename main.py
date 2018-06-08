@@ -8,7 +8,7 @@ Created on Tue Apr 10 13:09:31 2018
 from BBSolver import BBSolver
 import getopt
 import sys
-from Instance import create_instance, create_first_solution, initialize_global_values, empty_patterns, restricted_C_set
+from Instance import create_instance, create_first_solution, initialize_global_values, empty_patterns, restricted_C_set, restricted_C_set2
 from pattern import create_FT
 
 def main(argv):
@@ -39,6 +39,8 @@ def main(argv):
     
     #C_set, master_thresholds = restricted_C_set(C_set,patterns_set)
     
+    C_set, master_thresholds = restricted_C_set2(C_set,patterns_set,inputdepth)
+    
     #patterns_set, master_thresholds, TARGETS, C_set = empty_patterns(inputdepth)
     
     create_FT(C_set)
@@ -58,4 +60,4 @@ def main(argv):
                         
     return BBSolver(TARGETS, patterns_set, best_solution_value, inputdepth, C_set, master_thresholds)
     
-root=main(["-firis.csv","-d 2"])
+root=main(["-fbank_conv.csv","-d 4"])
