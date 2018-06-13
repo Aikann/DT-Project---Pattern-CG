@@ -40,24 +40,15 @@ def main(argv):
     #C_set, master_thresholds = restricted_C_set(C_set,patterns_set,inputdepth)
     
     C_set, master_thresholds = restricted_C_set2(C_set,patterns_set,inputdepth)
-    
-    #patterns_set, master_thresholds, TARGETS, C_set = empty_patterns(inputdepth)
-    
-    create_FT(C_set)
+        
+    #create_FT(C_set)
                 
     best_solution_value = sum([patterns_set[l][0].c for l in range(2**inputdepth)])
-    """
-    for l in range(len(patterns_set)):
-        
-        for p in patterns_set[l]:
-            
-            print(p)
-    """
+    
     initialize_global_values(TARGETS,inputdepth)
     
     print('Initialization done')
-    print('Constructing problems...')
                         
     return BBSolver(TARGETS, patterns_set, best_solution_value, inputdepth, C_set, master_thresholds)
     
-root=main(["-fwinequality-white.csv","-d 5"])
+root=main(["-fIndiansDiabetes.csv","-d 5"])

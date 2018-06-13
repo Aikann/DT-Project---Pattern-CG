@@ -369,9 +369,7 @@ def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set u
     print('Unique values at root node: '+str(sum([len(new_C_set[2**(depth-1) - 1][z]) for z in range(num_features)])))
     
     print(new_C_set)
-    
-    input()
-    
+        
     return new_C_set, new_MT
         
                     

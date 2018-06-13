@@ -15,9 +15,9 @@ def solveRMP(prob):
     
     prob.solve()
     
-def add_column(depth,prob,patterns_set,pattern_to_add,leaf,master_thresholds):
+def add_column(depth,prob,patterns_set,patterns_to_add):
     
-    return add_variable_to_master(depth,prob,patterns_set,pattern_to_add,leaf,master_thresholds)
+    return add_variable_to_master(depth,prob,patterns_set,patterns_to_add)
     
 def display_prob_lite(prob,side):
     

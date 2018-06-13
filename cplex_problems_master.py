@@ -10,7 +10,7 @@ from learn_tree_funcs import get_num_features, get_data_size, get_min_value, get
 import cplex
 
 
-def add_variable_to_master(depth,prob,prev_patterns_set,pattern_to_add,leaf,master_thresholds):
+def add_variable_to_master(depth,prob,prev_patterns_set,pattern_to_add):
         
     num_leafs = 2**depth
 
@@ -21,6 +21,8 @@ def add_variable_to_master(depth,prob,prev_patterns_set,pattern_to_add,leaf,mast
     my_columns = [[[],[]]]
             
     p=pattern_to_add
+    
+    leaf = p.leaf
                             
     var_types += "C"
 

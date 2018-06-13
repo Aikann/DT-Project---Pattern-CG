@@ -38,7 +38,6 @@ class BaP_Node:
         
         start=time.time()
         
-        init_pricing_probs(depth,C_set)
         """
         plt.figure(1)
         
@@ -60,6 +59,8 @@ class BaP_Node:
         """                           
         convergence = False
         
+        first_time = True
+        
         avoid_method(depth)
         
         #self.prob.write('here.lp','lp')
@@ -79,7 +80,7 @@ class BaP_Node:
                                 
         red_cost = float('+inf')
         
-        go_pricing, bad_pool = False, False
+        go_pricing, bad_pool = 0, False
         
         interesting_leaves = [l for l in range(2**depth)]
         
@@ -93,7 +94,6 @@ class BaP_Node:
                                     
             print(count_iter,"Time MP :",t)
             
-            #print("RC of initial solution: "+str(sum([self.prob.solution.get_reduced_costs("pattern_0_"+str(l)) for l in range(2**depth)])))
             """
             plt.figure(3)
             
@@ -103,7 +103,15 @@ class BaP_Node:
             """                                   
             pricing_method = 1
             
-            if go_pricing>1 or red_cost<0.001:# or count_iter%15==0 or(count_iter>500 and count_iter%5==0):
+            if (go_pricing>1 or red_cost<0.001) and ((not first_time) or (time.time()-start<8.5*60)):# or count_iter%15==0 or(count_iter>500 and count_iter%5==0):
+                
+                if first_time:
+                    
+                    print('Constructing problems...')
+                
+                    init_pricing_probs(depth,C_set)
+                    
+                    first_time = False
                         
                 b=time.time()
                                     
@@ -139,7 +147,6 @@ class BaP_Node:
                 
                 print('Pool generation time: '+str(time.time()-a))
                 
-                #input()
             """   
             plt.figure(1)
             
@@ -196,17 +203,7 @@ class BaP_Node:
                     self.solution_type = give_solution_type(self.prob)
                     
                     return
-                                                                        
-            #print("Full set",self.segments_set)
-                                    
-            #print("Full set after addition",self.segments_set)
-            """
-            if(sum([len(self.patterns_set[l]) for l in range(2**depth)]) > 7000):
-                
-                print('Cleaning')
-                
-                self.clean(C_set)
-            """            
+                                                                                   
             if not convergence:
                 
                 a=time.time()
@@ -231,24 +228,28 @@ class BaP_Node:
             l = p.leaf
                             
             if safe_insertion:
+                
+                hp = hash_pattern(p)
                                                                                                                 
-                if hash_pattern(p) not in self.H[l]:
+                if hp not in self.H[l]:
                 
                     self.patterns_set[l].append(p)
                                             
-                    self.H[l].append(hash_pattern(p))
+                    self.H[l].append(hp)
+                    
+                    parents = get_leaf_parents(l,num_nodes)
                     
                     for h in range(depth):
                         
-                        j = get_leaf_parents(l,num_nodes)[-h-1]
+                        j = parents[-h-1]
                         
                         (i,v) = p.F[h]
-                        
+                        """
                         if (j,i,v) not in self.master_thresholds:
                             
                             self.master_thresholds.append((j,i,v))
-                            
-                    self.prob = add_column(depth,self.prob,self.patterns_set[l],p,l,self.master_thresholds)
+                        """    
+                    self.prob = add_column(depth,self.prob,self.patterns_set[l],p)
                     
                 else:
                     
