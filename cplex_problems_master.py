@@ -83,9 +83,9 @@ def create_variables_CG(depth,patterns_set,C_set):
     
     for j in range(num_nodes):
 
-        for i in range(len(C_set)):
+        for i in range(len(C_set[j])):
             
-            for v in range(len(C_set[i])):
+            for v in range(len(C_set[j][i])):
     
                 var_names.append("rho_" + str(j) + "_" + str(i) + "_" + str(v))
         
@@ -155,9 +155,9 @@ def create_rows_CG(depth,patterns_set,master_thresholds,C_set):
     
         for j in parents:
                 
-            for i in range(len(C_set)):
+            for i in range(len(C_set[j])):
                 
-                for v in range(len(C_set[i])):
+                for v in range(len(C_set[j][i])):
                     
                     if (j,i,v) in master_thresholds:
                     

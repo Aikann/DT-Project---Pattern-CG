@@ -60,7 +60,7 @@ def get_Fvector_singlevalues(depth,master_prob,C_set,leaf):
     num_leafs = 2**depth
     num_nodes = num_leafs - 1
     num_features = get_num_features()
-    last_index = len(C_set[num_features-1]) - 1
+    last_index = len(C_set[0][num_features-1]) - 1
     
     parents = get_leaf_parents(leaf, num_nodes)
     F=[0 for h in range(depth)]
@@ -110,12 +110,12 @@ def genpatterns_random(depth,master_prob,C_set,interesting_leaves):
     patterns_to_be_added, red_costs, H = [0 for it in range(nbr_it)], [-1000 for it in range(nbr_it)], [0 for it in range(nbr_it)]
         
     for it in range(nbr_it):
-                
-        F = gen_Fvector_random(depth,C_set)
-                
+        
         rdn, count = random_numbers[count], count + 1
         
         l = interesting_leaves[int(rdn*len(interesting_leaves))]
+                
+        F = gen_Fvector_random(depth,C_set,l)
                         
         p=pattern(l,F,0,[],0)
                                         
@@ -169,12 +169,12 @@ def update_pool(depth,master_prob,C_set,interesting_leaves):
         
     for it in range(nbr_it):
         
-        F = gen_Fvector_random(depth,C_set)
-        
         rdn, count = random_numbers[count], count + 1
         
         l = interesting_leaves[int(rdn*len(interesting_leaves))]
-                        
+        
+        F = gen_Fvector_random(depth,C_set,l)
+        
         p=pattern(l,F,0,[],0)
                         
         p.add_missing_rows(depth,C_set)
@@ -227,15 +227,19 @@ def update_pool(depth,master_prob,C_set,interesting_leaves):
 
     return [sorted_patterns[p] for p in range(int(nbr_it/2)) if p<len(sorted_patterns) and red_costs[p]>0.001], max(red_costs) < 0.01
 
-def gen_Fvector_random(depth,C_set):
+def gen_Fvector_random(depth,C_set,l):
     
     global count
-        
-    non_empty_features = [i for i in range(len(C_set)) if len(C_set[i])>0]
     
     F = [0 for h in range(depth)]
     
+    parent=get_leaf_parents(l,2**depth-1)
+    
     for h in range(depth):
+        
+        j = parent[-1-h]
+        
+        non_empty_features = [i for i in range(len(C_set[j])) if len(C_set[j][i])>0]
         
         rdn, count = random_numbers[count], count + 1
         
@@ -243,7 +247,7 @@ def gen_Fvector_random(depth,C_set):
         
         rdn, count = random_numbers[count], count + 1
         
-        v = int(rdn*len(C_set[i]))
+        v = int(rdn*len(C_set[j][i]))
         
         F[h] = (i,v)
         
@@ -331,7 +335,7 @@ def gen_tree_random(depth,C_set):
         
         rdn, count = random_numbers[count], count + 1
         
-        v = int(rdn*len(C_set[i]))
+        v = int(rdn*len(C_set[j][i]))
         
         thr.append((i,v))
 

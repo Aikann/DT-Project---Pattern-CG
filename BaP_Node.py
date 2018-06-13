@@ -185,7 +185,7 @@ class BaP_Node:
                 
                 #input()
                 
-            if (time.time()-start)>=30*60:
+            if time.time()-start>10*60:
                 
                 a=input()
                 

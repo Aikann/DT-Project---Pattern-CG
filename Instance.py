@@ -39,7 +39,7 @@ def create_first_solution(inputdepth):
     
     data_size = get_data_size()
     
-    C_set = compute_C_set()
+    C_set = compute_C_set(inputdepth)
         
     master_thresholds = get_feature_and_thresholds(dt,inputdepth)
             
@@ -57,9 +57,9 @@ def create_first_solution(inputdepth):
                         
             triple = next(x for x in master_thresholds if x[0]==j)
             
-            i, v = triple[1], triple[2]
+            j, i, v =triple[0], triple[1], triple[2]
                         
-            if get_feature_value(r,i) <= C_set[i][v]:
+            if get_feature_value(r,i) <= C_set[j][i][v]:
                 
                 bin_code += "0"
                 
@@ -156,78 +156,88 @@ def convert_thresholds_to_index(master_thresholds,C_set):
         
         new_v = 0
         
-        if len(C_set[i])!=1: #if not a categorical feature
+        if len(C_set[j][i])>1: #if not a categorical feature
         
-            while v >= (C_set[i][new_v] + C_set[i][new_v+1])/2 and new_v < len(C_set[i]):
-            
+            while new_v+1 < len(C_set[j][i]) and v >= (C_set[j][i][new_v] + C_set[j][i][new_v+1])/2:
+                            
                 new_v += 1
             
         master_thresholds[m] = (j,i,new_v)
     
 
-def compute_C_set():
+def compute_C_set(depth):
     
     num_features = get_num_features()
     
-    C_set = [[] for i in range(num_features)]
+    C_set = [[[] for i in range(num_features)] for j in range(2**depth-1)]
     
-    for i in range(num_features):
-        
-        feats = get_sorted_feature_values(i)
-        
-        for k in range(len(feats)-1):
+    for j in range(2**depth -1):
+    
+        for i in range(num_features):
             
-            C_set[i].append((feats[k] + feats[k+1])/2.)
+            feats = get_sorted_feature_values(i)
+            
+            for k in range(len(feats)-1):
+                
+                C_set[j][i].append((feats[k] + feats[k+1])/2.)
             
     return C_set
 
-def restricted_C_set(C_set,patterns_set):
+def restricted_C_set(C_set,patterns_set,depth):
     
     num_features = get_num_features()
     
-    new_C_set = [[] for i in range(num_features)]
+    new_C_set = [[[] for i in range(num_features)] for j in range(2**depth-1)]
     
-    for i in range(num_features):
-        
-        if len(C_set[i])<=6:
+    for j in range(len(C_set)):
+    
+        for i in range(num_features):
             
-            cut=1
-        
-        elif len(C_set[i])<20:
-            
-            cut=4
-        
-        elif len(C_set[i])<100:
-            
-            cut=20
-            
-        elif len(C_set[i])<200:
-            
-            cut=40
-            
-        else:
-            
-            cut=100
-        
-        for v in range(len(C_set[i])):
-            
-            if (v+3)%cut==0:
+            if len(C_set[j][i])<=6:
                 
-                new_C_set[i].append(C_set[i][v])
+                cut=1
+            
+            elif len(C_set[j][i])<20:
+                
+                cut=4
+            
+            elif len(C_set[j][i])<100:
+                
+                cut=20
+                
+            elif len(C_set[j][i])<200:
+                
+                cut=40
+                
+            else:
+                
+                cut=100
+            
+            for v in range(len(C_set[j][i])):
+                
+                if (v+3)%cut==0:
+                    
+                    new_C_set[j][i].append(C_set[j][i][v])
                 
     for l in range(len(patterns_set)):
         
         F = patterns_set[l][0].F
         
-        for (i,v) in F:
-            
-            if C_set[i][v] not in new_C_set[i]:
-                
-                new_C_set[i].append(C_set[i][v])
-                
-    for i in range(num_features):
+        parents = get_leaf_parents(l,len(C_set))
         
-        new_C_set[i].sort()
+        for h in range(depth):
+            
+            (i,v) = F[h]
+            
+            if C_set[j][i][v] not in new_C_set[j][i]:
+                
+                new_C_set[j][i].append(C_set[j][i][v])
+                
+    for j in range(len(C_set)):
+                
+        for i in range(num_features):
+        
+            new_C_set[j][i].sort()
         
     new_MT = []
     
@@ -244,7 +254,9 @@ def restricted_C_set(C_set,patterns_set):
             
             (i,v) = F[h]
             
-            v2 = new_C_set[i].index(C_set[i][v])
+            j = parents[h]
+            
+            v2 = new_C_set[j][i].index(C_set[j][i][v])
             
             F[h] = (i,v2)
             
@@ -252,7 +264,7 @@ def restricted_C_set(C_set,patterns_set):
             
             new_MT.append((parents[h],i,v2))
             
-    print('Unique values: '+str(sum([len(new_C_set[z]) for z in range(num_features)])))
+    print('Unique values: '+str(sum([len(new_C_set[j2][z]) for j2 in range(len(C_set)) for z in range(num_features)])))
             
     return new_C_set, new_MT
 
@@ -260,43 +272,53 @@ def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set u
     
     num_features = get_num_features()
     
-    new_C_set = [[] for i in range(num_features)]
+    new_C_set = [[[] for i in range(num_features)] for j in range(2**depth-1)]
     
     new_MT = []
     
-    stop=0
+    stop, count = 0, 0
     
-    while stop<20: #compute interesting thresholds for root node only
+    while stop<300:
         
-        dt, TARGETS = tr.learnTrees_and_return_patterns(depth,sample=True)
+        count += 1
+        
+        dt, TARGETS = tr.learnTrees_and_return_patterns(depth,sample=count)
                 
         tree_thresholds = get_feature_and_thresholds(dt,depth)
         
-        print(tree_thresholds)
+        #print(tree_thresholds)
         
         convert_thresholds_to_index(tree_thresholds,C_set)
         
-        print(tree_thresholds)
+        #print(tree_thresholds)
         
         #input()
         
         for j in range(2**depth -1):
             
-            if j==(2**(depth -1) -1):
+            #♣if j==(2**(depth -1) -1):
         
-                triple = next(x for x in tree_thresholds if x[0]==j)
+            triple = next(x for x in tree_thresholds if x[0]==j)
+            
+            i, v = triple[1], triple[2]
+            
+            if C_set[j][i][v] not in new_C_set[j][i] and sum([len(new_C_set[j][i2]) for i2 in range(num_features)])<(100/(2**depth-1)):
+            
+                new_C_set[j][i].append(C_set[j][i][v])
                 
-                i, v = triple[1], triple[2]
-                
-                if C_set[i][v] not in new_C_set[i]:
-                
-                    new_C_set[i].append(C_set[i][v])
+                if j==(2**(depth-1) - 1):
                     
+                    for j2 in range(2**depth-1):
+                        
+                        if (C_set[j2][i][v] not in new_C_set[j2][i]):
+                        
+                            new_C_set[j2][i].append(C_set[j2][i][v])
+                
                     stop=0
-                    
-                else:#if j==(2**(depth-1) - 1):
-                    
-                    stop+=1
+                
+            elif j==(2**(depth-1) - 1):
+                
+                stop+=1
         
     num_leafs = len(patterns_set)
         
@@ -304,15 +326,24 @@ def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set u
         
         F = patterns_set[l][0].F
         
-        for (i,v) in F:
-            
-            if C_set[i][v] not in new_C_set[i]:
-                
-                new_C_set[i].append(C_set[i][v])
-                
-    for i in range(num_features):
+        parents = get_leaf_parents(l,len(C_set))
+        parents.reverse()
         
-        new_C_set[i].sort()
+        for h in range(depth):
+            
+            (i,v) = F[h]
+            
+            j = parents[h]
+            
+            if C_set[j][i][v] not in new_C_set[j][i]:
+                
+                new_C_set[j][i].append(C_set[j][i][v])
+                
+    for j in range(len(C_set)):
+                
+        for i in range(num_features):
+        
+            new_C_set[j][i].sort()
         
     for l in range(num_leafs):
         
@@ -325,13 +356,17 @@ def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set u
             
             (i,v) = F[h]
             
-            v2 = new_C_set[i].index(C_set[i][v])
+            j = parents[h]
+            
+            v2 = new_C_set[j][i].index(C_set[j][i][v])
             
             F[h] = (i,v2)
                         
             new_MT.append((parents[h],i,v2))
             
-    print('Unique values: '+str(sum([len(new_C_set[z]) for z in range(num_features)])))
+    print('Unique values: '+str(sum([len(new_C_set[j2][z]) for j2 in range(len(C_set)) for z in range(num_features)])))
+    
+    print('Unique values at root node: '+str(sum([len(new_C_set[2**(depth-1) - 1][z]) for z in range(num_features)])))
     
     print(new_C_set)
     
@@ -350,7 +385,7 @@ def empty_patterns(depth):
     
     num_nodes = num_leafs - 1
         
-    C_set = compute_C_set()
+    C_set = compute_C_set(depth)
     
     patterns_set = [[] for l in range(num_leafs)]
     
@@ -367,9 +402,9 @@ def empty_patterns(depth):
     return patterns_set, master_thresholds, TARGETS, C_set
 
                 
-def initialize_global_values(TARGETS,inputdepth,C_set):
+def initialize_global_values(TARGETS,inputdepth):
     
     TARGETS.sort()
     obtain_depth(inputdepth) #give depth to the BaP_Node module
     obtain_targets(TARGETS)
-    init_rand_hash(inputdepth,get_num_features(),C_set)
+    init_rand_hash(inputdepth,get_num_features())

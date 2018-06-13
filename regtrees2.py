@@ -149,7 +149,7 @@ def run_tree():
 
 #run_tree()
 
-def learnTrees_and_return_patterns(depth,sample=False):
+def learnTrees_and_return_patterns(depth,sample=0):
     global dt
     global features
     global targets
@@ -157,25 +157,28 @@ def learnTrees_and_return_patterns(depth,sample=False):
     target_feature = features[-1]
     features = list(features[:len(features)-1])
     targets = df[target_feature].unique()
-    print 'targets:', targets
-    print 'features:', features
+    if not sample:
+        print 'targets:', targets
+        print 'features:', features
+        print 'Num features', len(features)
     y=df[target_feature]
     X=df[features]
-    if not sample:
+    if sample==0:
         X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.0,random_state=0)
     else:
-        X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.0,train_size=0.9,random_state=None)
+        X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.0,train_size=0.9,random_state=10*sample)
     #dt = DecisionTreeRegressor(max_depth=depth)#, min_samples_split=20, random_state=99)
     dt = DecisionTreeClassifier(max_depth=depth)#, min_samples_split=20, random_state=99)
     dt.fit(X_train,y_train)
     prediction = dt.predict(X_train)
-    print 'accuracy:', accuracy_score(y_train,prediction)
-    print 'recall:', recall_score(y_train,prediction,average=None)
-    print 'classification report:'
-    print classification_report(y_train,prediction)
-    print 'num correct:', accuracy_score(y_train,prediction) * len(y_train)
-    print 'num incorrect:', (1-accuracy_score(y_train,prediction)) * len(y_train)
-    print 'R2 Score:', r2_score(y_train,prediction)
-    print 'absolute error:', mean_absolute_error(y_train,prediction)*len(X_train)
+    if not sample:
+        print 'accuracy:', accuracy_score(y_train,prediction)
+        print 'recall:', recall_score(y_train,prediction,average=None)
+        print 'classification report:'
+        print classification_report(y_train,prediction)
+        print 'num correct:', accuracy_score(y_train,prediction) * len(y_train)
+        print 'num incorrect:', (1-accuracy_score(y_train,prediction)) * len(y_train)
+        print 'R2 Score:', r2_score(y_train,prediction)
+        print 'absolute error:', mean_absolute_error(y_train,prediction)*len(X_train)
         
     return dt, targets

@@ -37,7 +37,7 @@ def main(argv):
                                                
     patterns_set, master_thresholds, TARGETS, C_set = create_first_solution(inputdepth)
     
-    #C_set, master_thresholds = restricted_C_set(C_set,patterns_set)
+    #C_set, master_thresholds = restricted_C_set(C_set,patterns_set,inputdepth)
     
     C_set, master_thresholds = restricted_C_set2(C_set,patterns_set,inputdepth)
     
@@ -53,11 +53,11 @@ def main(argv):
             
             print(p)
     """
-    initialize_global_values(TARGETS,inputdepth,C_set)
+    initialize_global_values(TARGETS,inputdepth)
     
     print('Initialization done')
     print('Constructing problems...')
                         
     return BBSolver(TARGETS, patterns_set, best_solution_value, inputdepth, C_set, master_thresholds)
     
-root=main(["-fbank_conv.csv","-d 4"])
+root=main(["-fwinequality-white.csv","-d 5"])

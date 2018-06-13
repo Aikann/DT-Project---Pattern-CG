@@ -14,10 +14,10 @@ import time
 """HASH FUNCTIONS"""
 
 
-def init_rand_hash(depth,num_features,C_set):
+def init_rand_hash(depth,num_features):
     random.seed(0)
     global rand_hash
-    rand_hash = [[[random.random() for v in range(len(C_set[i]))] for i in range(num_features)] for h in range(depth)]
+    rand_hash = [[[random.random() for v in range(get_data_size())] for i in range(num_features)] for h in range(depth)]
 
 def hash_pattern(pattern):
         
@@ -50,7 +50,7 @@ def extract_pattern_pricing(pricing_prob,leaf,depth,C_set):
             
     num_features = get_num_features()
     
-    R, F = [], [0 for h in range(depth)]
+    F = [0 for h in range(depth)]
     
     """
     
@@ -73,24 +73,8 @@ def extract_pattern_pricing(pricing_prob,leaf,depth,C_set):
                     Fbis.append((i,v))
                     
     """
-                
-    sol=pricing_prob.solution.get_values(depth*sum([len(C_set[i]) for i in range(num_features)]),pricing_prob.variables.get_num()-1)
-        
-    sol=np.array(sol)
-    
-    index = np.where(sol > 0.99)[0]
-    
-    for idx in index:
-    
-        var_name = pricing_prob.variables.get_names(depth*sum([len(C_set[i]) for i in range(num_features)])+int(idx))
-                
-        tmp=var_name.split("_")
-        
-        row = int(tmp[-1])
-        
-        R.append(row)
 
-    sol=pricing_prob.solution.get_values(0,depth*sum([len(C_set[f]) for f in range(num_features)])-1)
+    sol=pricing_prob.solution.get_values(0,sum([len(C_set[j][f]) for j in get_leaf_parents(leaf,len(C_set)) for f in range(num_features)])-1)
                 
     sol=np.array(sol)
         
@@ -112,7 +96,7 @@ def extract_pattern_pricing(pricing_prob,leaf,depth,C_set):
     
     #assert F==Fbis
                         
-    p = pattern(leaf,F,0,R,0) #target and score will be computed in the next function
+    p = pattern(leaf,F,0,[],0) #target and score will be computed in the next function
             
     return p
             

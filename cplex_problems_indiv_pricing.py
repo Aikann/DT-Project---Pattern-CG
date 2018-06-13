@@ -43,7 +43,7 @@ def create_variables_pricing(depth,leaf,target,C_set):
                         
             for i in range(num_features): 
             
-                for v in range(len(C_set[i])):
+                for v in range(len(C_set[j][i])):
                     
                     var_names.append("u_"+str(i)+"_"+str(h)+"_"+str(v))
                     
@@ -83,12 +83,16 @@ def create_rows_pricing(depth,leaf,C_set):
     data_size = get_data_size()
 
     num_features = get_num_features()
+    
+    parents = get_leaf_parents(leaf,len(C_set))
             
     for h in range(depth): #constraint (7)
         
-        col_names = ["u_"+str(i)+"_"+str(h)+"_"+str(v) for i in range(num_features) for v in range(len(C_set[i]))]
+        j = parents[-h-1]
+        
+        col_names = ["u_"+str(i)+"_"+str(h)+"_"+str(v) for i in range(num_features) for v in range(len(C_set[j][i]))]
 
-        col_values = [1 for i in range(num_features) for v in range(len(C_set[i]))]
+        col_values = [1 for i in range(num_features) for v in range(len(C_set[j][i]))]
 
         row_names.append("contraint_7_" + str(h))
 
@@ -102,6 +106,8 @@ def create_rows_pricing(depth,leaf,C_set):
         
     for h in range(depth): # constraint(8)
         
+        j = parents[-1-h]
+        
         if bin_l[h]=='0':
             
             for r in range(data_size):
@@ -112,9 +118,9 @@ def create_rows_pricing(depth,leaf,C_set):
                 
                 for i in range(num_features):
                     
-                    for v in range(len(C_set[i])):
+                    for v in range(len(C_set[j][i])):
                         
-                        if get_feature_value(r,i) <= C_set[i][v]:
+                        if get_feature_value(r,i) <= C_set[j][i][v]:
                             
                             col_names.append("u_"+str(i)+"_"+str(h)+"_"+str(v))
                             
@@ -138,9 +144,9 @@ def create_rows_pricing(depth,leaf,C_set):
                 
                 for i in range(num_features):
                     
-                    for v in range(len(C_set[i])):
+                    for v in range(len(C_set[j][i])):
                         
-                        if get_feature_value(r,i) > C_set[i][v]:
+                        if get_feature_value(r,i) > C_set[j][i][v]:
                             
                             col_names.append("u_"+str(i)+"_"+str(h)+"_"+str(v))
                             
@@ -159,14 +165,16 @@ def create_rows_pricing(depth,leaf,C_set):
             col_names, col_values = [], []
             
             for h in range(depth):
+                
+                j = parents[-h-1]
         
                 if bin_l[h]=='0':
                                                                                     
                     for i in range(num_features):
                         
-                        for v in range(len(C_set[i])):
+                        for v in range(len(C_set[j][i])):
                             
-                            if get_feature_value(r,i) <= C_set[i][v]:
+                            if get_feature_value(r,i) <= C_set[j][i][v]:
                                 
                                 col_names.append("u_"+str(i)+"_"+str(h)+"_"+str(v))
                                 
@@ -176,9 +184,9 @@ def create_rows_pricing(depth,leaf,C_set):
                     
                     for i in range(num_features):
                         
-                        for v in range(len(C_set[i])):
+                        for v in range(len(C_set[j][i])):
                             
-                            if get_feature_value(r,i) > C_set[i][v]:
+                            if get_feature_value(r,i) > C_set[j][i][v]:
                                 
                                 col_names.append("u_"+str(i)+"_"+str(h)+"_"+str(v))
                                 
@@ -195,10 +203,12 @@ def create_rows_pricing(depth,leaf,C_set):
             row_right_sides.append(depth-1)
     
             row_senses = row_senses + "L"
-    
+            
+    #TODO; modify the following constraint with the new C_set
+    """
     for i in range(num_features):
         
-        for v in range(len(C_set[i])):
+        for v in range(len(C_set[j][i])):
             
             col_names = ["u_"+str(i)+"_"+str(h)+"_"+str(v) for h in range(depth)]
             
@@ -211,7 +221,7 @@ def create_rows_pricing(depth,leaf,C_set):
             row_right_sides.append(1)
     
             row_senses = row_senses + "L"
-                
+    """            
         
     return row_names, row_values, row_right_sides, row_senses
     
