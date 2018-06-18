@@ -70,7 +70,7 @@ def solve_pricing_given_leaf_and_target(depth,master_prob,leaf,target,branch_var
     pattern.add_missing_rows(depth,C_set)
     
     pattern.pred_target()
-    
+        
     print("Time completing: "+str(time.time()-a))
     
     #print(pattern)

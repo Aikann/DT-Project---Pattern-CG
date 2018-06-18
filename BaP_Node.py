@@ -192,7 +192,7 @@ class BaP_Node:
                 
                 #input()
                 
-            if time.time()-start>10*60:
+            if time.time()-start>0.6*60:
                 
                 a=input()
                 
@@ -203,6 +203,10 @@ class BaP_Node:
                     self.solution_type = give_solution_type(self.prob)
                     
                     return
+                
+                else:
+                    
+                    start=10*60 - a
                                                                                    
             if not convergence:
                 
@@ -244,11 +248,11 @@ class BaP_Node:
                         j = parents[-h-1]
                         
                         (i,v) = p.F[h]
-                        """
+                        
                         if (j,i,v) not in self.master_thresholds:
                             
                             self.master_thresholds.append((j,i,v))
-                        """    
+                          
                     self.prob = add_column(depth,self.prob,self.patterns_set[l],p)
                     
                 else:

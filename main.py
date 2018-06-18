@@ -51,4 +51,4 @@ def main(argv):
                         
     return BBSolver(TARGETS, patterns_set, best_solution_value, inputdepth, C_set, master_thresholds)
     
-root=main(["-fIndiansDiabetes.csv","-d 5"])
+root=main(["-fIndiansDiabetes.csv","-d 2"])

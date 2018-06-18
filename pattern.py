@@ -85,7 +85,7 @@ class pattern:
                     incl = False
                     
                     break
-                    
+                
             if incl:
                 
                 self.R.append(r)
@@ -126,10 +126,10 @@ class pattern:
                     self.R.append(r)
                     
                     
-    def pred_target(self):
+    def pred_target(self,target=None):
                     
         targets = [get_target(r) for r in self.R]
-    
+            
         try:
             
             pred = Counter(targets).most_common(1)[0][0]

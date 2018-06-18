@@ -160,7 +160,7 @@ def create_rows_pricing(depth,leaf,C_set):
         
                 row_senses = row_senses + "L"
                 
-        for r in range(data_size):
+        for r in range(data_size): # constraint (9)
             
             col_names, col_values = [], []
             
