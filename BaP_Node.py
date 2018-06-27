@@ -192,11 +192,11 @@ class BaP_Node:
                 
                 #input()
                 
-            if time.time()-start>0.6*60:
+            if time.time()-start>10*60:
                 
-                a=input()
+                #a=input()
                 
-                if a =="stop":
+                #if a =="stop":
                     
                     self.solution_value = self.prob.solution.get_objective_value()
                     self.solution = self.prob.solution.get_values()
@@ -204,9 +204,9 @@ class BaP_Node:
                     
                     return
                 
-                else:
+                #else:
                     
-                    start=10*60 - a
+                    #start=10*60 - a*60
                                                                                    
             if not convergence:
                 

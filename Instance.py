@@ -7,19 +7,26 @@ Created on Wed Apr 18 09:58:55 2018
 
 import regtrees2 as tr
 from learn_tree_funcs import transform_data, read_file, write_file, scale_data, get_num_features, get_feature_value, get_data_size, get_target, get_leaf_parents, get_sorted_feature_values
-from learn_tree_funcs import sget_children, get_left_node, get_right_node
+from learn_tree_funcs import sget_children, get_left_node, get_right_node, obtain_targets2
 from nodes_external_management import init_rand_hash
 from BaP_Node import obtain_depth
 from collections import Counter
 from pattern import pattern
 from cplex_problems_indiv_pricing import obtain_targets
 import numpy as np
+from heuristics import init_heur
 
-def create_instance(inputfile):
+def post_files(rows,ID):
+    
+    df2=tr.df.iloc[rows]
+    
+    df2.to_csv('sub_p_'+str(ID)+'.csv',sep=',',index=False,header=False)
+
+def create_instance(inputfile,test=False,inputdepth=0):
     
     read_file(inputfile)
    
-    scale_data()
+    #scale_data()
     
     #transform_data()
 
@@ -27,6 +34,13 @@ def create_instance(inputfile):
    
     tr.df = tr.get_data(inputfile+".transformed")
     
+    tr.df[tr.df.columns[-1]]=tr.df[tr.df.columns[-1]].astype('int')
+    
+    if test:
+        
+        return tr.df
+        
+        
 def create_first_solution(inputdepth):
     
     dt, TARGETS = tr.learnTrees_and_return_patterns(inputdepth)
@@ -278,6 +292,8 @@ def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set u
     
     stop, count = 0, 0
     
+    list_thr = [[] for j in range(2**depth-1)]
+    
     while stop<300:
         
         count += 1
@@ -302,23 +318,41 @@ def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set u
             
             i, v = triple[1], triple[2]
             
-            if C_set[j][i][v] not in new_C_set[j][i] and sum([len(new_C_set[j][i2]) for i2 in range(num_features)])<(100/(2**depth-1)):
+            #if C_set[j][i][v] not in new_C_set[j][i] and sum([len(new_C_set[j][i2]) for i2 in range(num_features)])<(100/(2**depth-1)):
             
-                new_C_set[j][i].append(C_set[j][i][v])
+                #new_C_set[j][i].append(C_set[j][i][v])
+                
+            if (i,v) not in list_thr[j]:
+                
+                list_thr[j].append((i,v))
                 
                 if j==(2**(depth-1) - 1):
-                    
-                    for j2 in range(2**depth-1):
-                        
-                        if (C_set[j2][i][v] not in new_C_set[j2][i]):
-                        
-                            new_C_set[j2][i].append(C_set[j2][i][v])
-                
+
                     stop=0
                 
             elif j==(2**(depth-1) - 1):
                 
                 stop+=1
+                
+    for j in range(2**depth-1):
+        
+        if j==(2**(depth-1) - 1):
+            
+            for (i,v) in list_thr[j]:
+                
+                if C_set[j][i][v] not in new_C_set[j][i]:
+                    
+                    new_C_set[j][i].append(C_set[j][i][v])
+                    
+        else:
+                
+            for k in Counter(list_thr[j]).most_common(100/(2**depth-1)):
+                
+                (i,v)=k[0]
+                
+                if C_set[j][i][v] not in new_C_set[j][i]:
+                    
+                    new_C_set[j][i].append(C_set[j][i][v])
         
     num_leafs = len(patterns_set)
         
@@ -404,5 +438,7 @@ def initialize_global_values(TARGETS,inputdepth):
     
     TARGETS.sort()
     obtain_depth(inputdepth) #give depth to the BaP_Node module
+    obtain_targets2(TARGETS)
     obtain_targets(TARGETS)
     init_rand_hash(inputdepth,get_num_features())
+    init_heur()

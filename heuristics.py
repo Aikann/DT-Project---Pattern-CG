@@ -13,9 +13,14 @@ import matplotlib.pyplot as plt
 import time
 import numpy as np
 
-random.seed(0)
-random_numbers = [random.random() for i in range(long(1e7))]
-count = 0
+def init_heur():
+    
+    global count
+    global random_numbers
+
+    random.seed(0)
+    random_numbers = [random.random() for i in range(long(1e7))]
+    count = 0
 
 
 
@@ -190,9 +195,7 @@ def update_pool(depth,master_prob,C_set,interesting_leaves):
             patterns_to_be_added.append(p)
             
             red_costs.append(0)
-            
-    a=time.time()
-    
+                
     theta = np.array([master_prob.solution.get_dual_values("row_constraint_"+str(r)) for r in range(get_data_size())])
             
     for p in range(len(patterns_to_be_added)):
@@ -204,9 +207,7 @@ def update_pool(depth,master_prob,C_set,interesting_leaves):
         else:
         
             red_costs[p] = compute_rc(depth,patterns_to_be_added[p],master_prob,theta)
-            
-    print('Computing red cost time: '+str(time.time()-a))
-                        
+                                    
     sorted_patterns = [x for _,x in sorted(zip(red_costs,patterns_to_be_added),reverse=True)]
     sorted_H = [x for _,x in sorted(zip(red_costs,H),reverse=True)]
     red_costs.sort(reverse=True)

@@ -9,35 +9,7 @@ from learn_tree_funcs import get_data_size, get_feature_value, get_target, get_l
 from collections import Counter
 import time
 import numpy as np
-
-def create_FT(C_set):
     
-    global FT
-    global tab_uni
-    
-    data_size = get_data_size()
-    
-    num_uni = sum([len(C_set[j][i]) for j in range(len(C_set)) for i in range(len(C_set[j]))])
-    
-    tab_uni = [(j,i,v) for j in range(len(C_set)) for i in range(len(C_set[j])) for v in range(len(C_set[j][i]))]
-    
-    FT = [[0 for c in range(num_uni)] for r in range(data_size)]
-        
-    for r in range(data_size):
-        
-        for c in range(num_uni):
-            
-            (j,i,v)=tab_uni[c]
-                                
-            if get_feature_value(r,i) <= C_set[j][i][v]:
-                
-                FT[r][c]=-1
-                
-            else:
-                
-                FT[r][c]=1
-                        
-    FT = np.array(FT)
                                             
 class pattern:
     
@@ -57,7 +29,43 @@ class pattern:
     def add_missing_rows(self,depth,C_set): #compute the exact pattern given the one provided by the pricing
     
         data_size = get_data_size()
+                        
+        bin_l = bin(self.leaf)[2:].zfill(depth)
+        
+        parents = get_leaf_parents(self.leaf,len(C_set))
+        
+        for r in range(data_size):
+            
+            #if r not in self.R: #check if this row has to be included
                 
+            incl = True
+            
+            for h in range(depth):
+                
+                j = parents[-1-h]
+                
+                (i,v) = self.F[h]
+                                                                        
+                if get_feature_value(r,i) <= C_set[j][i][v] and bin_l[h]=='1':
+                    
+                    incl = False
+                    
+                    break
+                    
+                elif get_feature_value(r,i) > C_set[j][i][v] and bin_l[h]=='0':
+                    
+                    incl = False
+                    
+                    break
+                
+            if incl:
+                
+                self.R.append(r)
+                    
+    def add_missing_rows2(self,depth,C_set,DATA): #compute the exact pattern given the one provided by the pricing
+            
+        data_size = len(DATA)
+        
         bin_l = bin(self.leaf)[2:].zfill(depth)
         
         parents = get_leaf_parents(self.leaf,len(C_set))
@@ -90,43 +98,12 @@ class pattern:
                 
                 self.R.append(r)
                     
-    def add_missing_rows2(self,depth,C_set): #compute the exact pattern given the one provided by the pricing
-            
-        data_size = get_data_size()
+    def score(self):
         
-        num_uni = sum([len(C_set[j][i]) for j in range(len(C_set)) for i in range(len(C_set[j]))])
-        
-        matrix_f = np.zeros((num_uni,depth))
-        
-        vector_f = np.zeros((depth,1))
-        
-        parents = get_path(self.leaf,len(C_set))
-        
-        parents.reverse()
-        
-        for h in range(depth):
-            
-            (i,v) = self.F[h]
-            
-            direction = parents[2*h]
-            j=parents[2*h+1]
-            
-            idx = tab_uni.index((j,i,v))
-            
-            matrix_f[idx][h] = 1
-            
-            vector_f[h] = 1 - 2*(direction=='left')
-            
-        M = np.dot(np.dot(FT,matrix_f),vector_f)
-            
-        for r in range(data_size):
-                        
-            if M[r]==depth:
-                    
-                    self.R.append(r)
+        return(sum([get_target(r)==self.target for r in self.R]))
                     
                     
-    def pred_target(self,target=None):
+    def pred_target(self):
                     
         targets = [get_target(r) for r in self.R]
             

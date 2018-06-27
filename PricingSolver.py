@@ -58,21 +58,13 @@ def solve_pricing_given_leaf_and_target(depth,master_prob,leaf,target,branch_var
     obj_value = pricing_prob.solution.get_objective_value()
         
     obj_value = obj_value - master_prob.solution.get_dual_values("constraint_2_" + str(leaf))
-    
-    a=time.time()
-                    
+                        
     pattern = extract_pattern_pricing(pricing_prob,leaf,depth,C_set)
-    
-    print("Time extracting: "+str(time.time()-a))
-    
-    a=time.time()
-    
+            
     pattern.add_missing_rows(depth,C_set)
     
     pattern.pred_target()
-        
-    print("Time completing: "+str(time.time()-a))
-    
+            
     #print(pattern)
     
 #except:
