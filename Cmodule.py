@@ -8,7 +8,6 @@ import os
 from learn_tree_funcs import read_file, write_file
 import regtrees2 as tr
 import time
-import os
 
 def write_C_pb(filename,depth):
     

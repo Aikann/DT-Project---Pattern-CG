@@ -14,6 +14,7 @@ import time
 from testmodule import test, create_train_and_test
 import numpy as np
 import xlsxwriter
+import os
 
 def main(argv):
         
@@ -71,8 +72,8 @@ def main(argv):
                         
         return BBSolver(TARGETS, patterns_set, best_solution_value, inputdepth, C_set, master_thresholds,postp), C_set
 
-
-DIR="D:\Travail\X\Stage 3A\DT Project - Pattern CG\Instances\\"    
+CURDIR=os.getcwd()
+DIR=CURDIR+"\Instances\\"  
 #tree, C_set = main(["-f"+DIR+"chess.csv","-d 3","-p 2"])
 
 #score=test(tree,C_set,"IndiansDiabetestest.csv")
