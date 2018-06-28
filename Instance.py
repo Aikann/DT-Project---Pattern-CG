@@ -282,7 +282,7 @@ def restricted_C_set(C_set,patterns_set,depth):
             
     return new_C_set, new_MT
 
-def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set using information from CART trees
+def restricted_C_set2(C_set,patterns_set,depth,algo): #compute the restricted C_set using information from CART trees
     
     num_features = get_num_features()
     
@@ -294,7 +294,9 @@ def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set u
     
     list_thr = [[] for j in range(2**depth-1)]
     
-    while stop<300:
+    max_iter=int(300*(algo=='CG*') + int(7/depth)*30*(algo=='CG'))
+    
+    while stop<max_iter:
         
         count += 1
         

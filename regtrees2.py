@@ -182,3 +182,23 @@ def learnTrees_and_return_patterns(depth,sample=0):
         print 'absolute error:', mean_absolute_error(y_train,prediction)*len(X_train)
         
     return dt, targets
+
+def genCART(trainfile,testfile,depth):
+    
+    df_train=pd.read_csv(trainfile,sep=';')
+    features = list(df_train.columns)
+    target_feature = features[-1]
+    features = list(features[:len(features)-1])
+    df_test=pd.read_csv(testfile,sep=';')
+    dt = DecisionTreeClassifier(max_depth=depth)#, min_samples_split=20, random_state=99)
+    dt.fit(df_train[features],df_train[target_feature])
+    prediction = dt.predict(df_test[features])
+    y_test=df_test[target_feature]
+    
+    print 'accuracy:', accuracy_score(y_test,prediction)
+    print 'recall:', recall_score(y_test,prediction,average=None)
+    print 'num correct:', accuracy_score(y_test,prediction) * len(y_test)
+    print 'num incorrect:', (1-accuracy_score(y_test,prediction)) * len(y_test)
+    print 'R2 Score:', r2_score(y_test,prediction)
+
+    return accuracy_score(y_test,prediction)

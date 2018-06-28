@@ -9,17 +9,16 @@ from RMPSolver import create_new_master, display_prob_lite
 from BaP_Node import BaP_Node
 import time
 from nodes_external_management import hash_pattern
-from learn_tree_funcs import get_num_features, get_data_size, get_num_targets, get_depth, get_leaf_parents
+from learn_tree_funcs import get_depth, get_leaf_parents
 import matplotlib.pyplot as plt
 from Instance import post_files
 import numpy as np
-import pandas as pd
 from Cmodule import execute_C_code, write_C_subp, get_res, get_new_thresholds
 import copy
 
 chosen_method = "HORIZONTAL_SEARCH"
 
-def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_thresholds,postp):
+def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_thresholds,postp,algo):
     
     prob=create_new_master(inputdepth,patterns_set,master_thresholds,C_set)
     
@@ -33,50 +32,17 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
                             
     root_node=BaP_Node(patterns_set,prob,"",None,H,[],[],master_thresholds) #construct root node
     
-    best_ID = 'Optimal solution found at root node'
-        
-    a=time.time()
-    
-    #root_node.explore(30000,C_set)
-    
-    root_node.prob.solve()
-    root_node.solution_type='integer'
-    
-    print("Full time : "+str(time.time()-a))
-    
-    print("Upper bound at root node : "+str(root_node.prob.solution.get_objective_value()))
-    
-    print("Number of columns: "+str(sum([len(root_node.patterns_set[l]) for l in range(2**inputdepth)])))
-    
-    UB = root_node.prob.solution.get_objective_value()
-    
-    if round(UB) - 1e-5 <= UB <= round(UB) + 1e-5:
-        
-        UB = int(round(UB))
-        
-    else:
-        
-        UB = int(UB)
-        
-    UB_level = [[] for i in range(3000)]
-    
-    UB_level[0].append(UB)
-    
-    #display_RMP_solution_primal(inputdepth,root_node.prob,0,root_node.segments_set)
-    
-    #return root_node
-    
-    for i in root_node.prob.variables.get_names():
-    
-        root_node.prob.variables.set_types(i,"B")
-        
-    root_node.prob.solve()
-    
-    best_solution_value = root_node.prob.solution.get_objective_value()
-    
-    root_node.CORR = []
-    
     if postp>=1:
+        
+        for i in root_node.prob.variables.get_names():
+    
+            root_node.prob.variables.set_types(i,"B")
+        
+        root_node.prob.solve()
+        
+        best_solution_value = root_node.prob.solution.get_objective_value()
+        
+        root_node.CORR = []
     
         for l in range(2**(inputdepth-postp)):
             
@@ -108,16 +74,10 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
             
             post_files(rows,l)
                  
-    root_node.CORR = np.array(root_node.CORR)
-    
-    if root_node.solution_type == 'integer':
+        root_node.CORR = np.array(root_node.CORR)
         
-        print('Integer for LP')
-        
-    print("Best solution: "+str(best_solution_value))
-                
-    if postp>=1:
-        
+        print("Best solution: "+str(best_solution_value))
+                        
         final_tree=[]
         
         new_thresholds=[]
@@ -139,13 +99,9 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
             res=get_res(l)
             
             progress.append(res-root_node.CORR[l])
-            
-            if postp==2:
-            
-                new_thresholds.extend(get_new_thresholds(l))
-                
-                print(new_thresholds)
-                
+                        
+            new_thresholds.extend(get_new_thresholds(l,postp))
+                            
         for (j,i,thr) in new_thresholds:
             
             if thr not in C_set[j][i]:
@@ -183,10 +139,14 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
         best_solution_value = best_solution_value+total_progress
         
         print('Final score after post-processing: '+str(best_solution_value))
+        
+        print(best_solution_value,sum( [final_tree[i].c for i in range(len(final_tree))] ),total_progress)
                             
         assert(sum( [final_tree[i].c for i in range(len(final_tree))] ) == best_solution_value)
-    
-    print("Total time :"+str(time.time() - a))
+        
+    if algo=='CART*':
+                
+        return final_tree
     
     #write_tree(inputdepth,root_node,C_set)
     """ PART 2 """
@@ -195,28 +155,29 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
     """
     """
     
-    patterns_set=[[final_tree[i]] for i in range(len(final_tree))]
+    if postp >=1:
     
-    prob=create_new_master(inputdepth,patterns_set,master_thresholds,C_set)
-    
-    H = [[0] for l in range(len(patterns_set))]
-    
-    for l in range(len(patterns_set)):
+        patterns_set=[[final_tree[i]] for i in range(len(final_tree))]
         
-        for p in range(len(patterns_set[l])):
+        prob=create_new_master(inputdepth,patterns_set,master_thresholds,C_set)
         
-            H[l].append(hash_pattern(patterns_set[l][p]))
+        H = [[0] for l in range(len(patterns_set))]
+        
+        for l in range(len(patterns_set)):
+            
+            for p in range(len(patterns_set[l])):
+            
+                H[l].append(hash_pattern(patterns_set[l][p]))
                             
-    root_node=BaP_Node(patterns_set,prob,"",None,H,[],[],master_thresholds) #construct root node
-    
-    #best_ID = 'Optimal solution found at root node'
-        
-    #a=time.time()
+        root_node=BaP_Node(patterns_set,prob,"",None,H,[],[],master_thresholds) #construct root node
+            
+    a=time.time()
     
     root_node.explore(30000,C_set)
     
-    root_node.prob.solve()
-    root_node.solution_type='integer'
+    if root_node.solution_type == 'integer':
+        
+        print('Integer for LP')
     
     print("Full time : "+str(time.time()-a))
     
@@ -233,20 +194,14 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
     else:
         
         UB = int(UB)
-        
-    UB_level = [[] for i in range(3000)]
-    
-    UB_level[0].append(UB)
-    
-    #display_RMP_solution_primal(inputdepth,root_node.prob,0,root_node.segments_set)
-    
-    #return root_node
     
     for i in root_node.prob.variables.get_names():
     
         root_node.prob.variables.set_types(i,"B")
         
     root_node.prob.solve()
+    
+    root_node.solution_type='integer'
     
     best_solution_value = root_node.prob.solution.get_objective_value()
     
@@ -285,10 +240,6 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
             post_files(rows,l)
                  
     root_node.CORR = np.array(root_node.CORR)
-    
-    if root_node.solution_type == 'integer':
-        
-        print('Integer for LP')
         
     print("Best solution: "+str(best_solution_value))
                 
@@ -368,7 +319,19 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
     
     print("Total time :"+str(time.time() - a))
     
-    return final_tree
+    if postp>=1:
+    
+        return final_tree
+    
+    else:
+        
+        final_tree=[]
+        
+        for leaf in range(2**inputdepth):
+            
+            final_tree.append(next(root_node.patterns_set[leaf][pat] for pat in range(len(root_node.patterns_set[leaf])) if float(root_node.prob.solution.get_values("pattern_"+str(pat)+"_"+str(leaf)))>=0.99))
+    
+        return final_tree
     
     
 def write_tree(depth,root_node,C_set):

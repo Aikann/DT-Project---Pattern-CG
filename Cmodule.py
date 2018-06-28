@@ -44,7 +44,7 @@ def write_C_subp(l,depth):
     
     for line in fr.readlines():
             
-        if "int TreeDep = 0;" in line:
+        if "int TreeDep =" in line:
             
             fw.write("int TreeDep = "+str(depth)+";\n")
             
@@ -85,8 +85,8 @@ def execute_C_code(l,bruteforce=False):
         fw.write('subp'+str(l)+'\n')
     
     fw.close()
-    
-    os.system('run.cmd')
+        
+    os.popen('run.cmd').read()
     
 def get_res(l,bruteforce=False):
     
@@ -134,7 +134,7 @@ def brute_force_solver(inputfile,depth):
     
     print("Full time: "+str(time.time()-a))
     
-def get_new_thresholds(l):
+def get_new_thresholds(l,depth):
     
     fr=open('results_subp_'+str(l)+'.txt',"r")
     
@@ -142,26 +142,40 @@ def get_new_thresholds(l):
     
     fr.close()
     
-    line0, line1, line2 = readl[2], readl[3], readl[4]
+    if depth==2:
     
-    i0 = int(line0.split('Feat_')[1].split(',')[0])
-    
-    thr0 = float(line0.split('threshold ')[1].split('\n')[0])
-    
-    j0 = 1 + 4*l
-    
-    i1 = int(line1.split('Feat_')[1].split(',')[0])
-    
-    thr1 = float(line1.split('threshold ')[1].split('\n')[0])
-    
-    j1 = 4*l
-    
-    i2 = int(line2.split('Feat_')[1].split(',')[0])
-    
-    thr2 = float(line2.split('threshold ')[1].split('\n')[0])
-    
-    j2 = 4*l + 2
-    
-    new_thr = [(j0,i0,thr0),(j1,i1,thr1),(j2,i2,thr2)]
+        line0, line1, line2 = readl[2], readl[3], readl[4]
+        
+        i0 = int(line0.split('Feat_')[1].split(',')[0])
+        
+        thr0 = float(line0.split('threshold ')[1].split('\n')[0])
+        
+        j0 = 1 + 4*l
+        
+        i1 = int(line1.split('Feat_')[1].split(',')[0])
+        
+        thr1 = float(line1.split('threshold ')[1].split('\n')[0])
+        
+        j1 = 4*l
+        
+        i2 = int(line2.split('Feat_')[1].split(',')[0])
+        
+        thr2 = float(line2.split('threshold ')[1].split('\n')[0])
+        
+        j2 = 4*l + 2
+        
+        new_thr = [(j0,i0,thr0),(j1,i1,thr1),(j2,i2,thr2)]
+        
+    elif depth==1:
+        
+        line0 = readl[2]
+        
+        i0 = int(line0.split('Feat_')[1].split(',')[0])
+        
+        thr0 = float(line0.split('threshold ')[1].split('\n')[0])
+        
+        j0 = 2*l
+        
+        new_thr = [(j0,i0,thr0)]
     
     return new_thr
