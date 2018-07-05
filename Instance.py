@@ -294,7 +294,7 @@ def restricted_C_set2(C_set,patterns_set,depth,algo): #compute the restricted C_
     
     list_thr = [[] for j in range(2**depth-1)]
     
-    max_iter=int(300*(algo=='CG*') + int(7/depth)*30*(algo=='CG'))
+    max_iter=300#int(300*(algo=='CG*')) + int(140*(algo=='CG'))
     
     while stop<max_iter:
         
@@ -340,7 +340,9 @@ def restricted_C_set2(C_set,patterns_set,depth,algo): #compute the restricted C_
         
         if j==(2**(depth-1) - 1):
             
-            for (i,v) in list_thr[j]:
+            for k in Counter(list_thr[j]).most_common(150/(2**depth-1)):
+                
+                (i,v)=k[0]
                 
                 if C_set[j][i][v] not in new_C_set[j][i]:
                     

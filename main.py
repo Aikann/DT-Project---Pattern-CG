@@ -68,7 +68,7 @@ DIR=CURDIR+"\Instances\\"
 #score=test(tree,C_set,"IndiansDiabetestest.csv")
         
 
-def run_tests(instances,depths,postprocessing):
+def run_tests(instances,depths,postprocessing,algo):
         
     sol=[]
     val=[]
@@ -80,13 +80,14 @@ def run_tests(instances,depths,postprocessing):
     worksheet.write(0,3,"Worst")
     worksheet.write(0,4,"Time")
     
+    sol=[]
+    
     for inst in range(len(instances)):
         
         for k in depths:
             
             for p in postprocessing:
                 
-                sol=[]
                 val=[]
                 r_time=[]
                     
@@ -99,7 +100,7 @@ def run_tests(instances,depths,postprocessing):
                 
                         a=time.time()
                         
-                        tree, C_set = main(["-f"+trainfile,"-d "+str(k),"-p "+str(p),"-aCG"])
+                        tree, C_set = main(["-f"+trainfile,"-d "+str(k),"-p "+str(p),"-a"+algo])
                         
                         real_time = time.time() - a
                         
@@ -111,7 +112,7 @@ def run_tests(instances,depths,postprocessing):
                         
                         r_time.append(real_time)
                         
-                write_in_excel(worksheet,inst,instances[inst].split("\\")[-1],val,r_time)
+                write_in_excel(worksheet,len(instances)*k+inst,instances[inst].split("\\")[-1],val,r_time)
         
     workbook.close()
             
@@ -136,11 +137,12 @@ def run_CART(instances,depths):
     worksheet.write(0,3,"Worst")
     worksheet.write(0,4,"Time")
     
+    sol=[]
+    
     for inst in range(len(instances)):
-        
+                
         for k in depths:
                             
-            sol=[]
             val=[]
             r_time=[]
                 
@@ -163,7 +165,7 @@ def run_CART(instances,depths):
                 
                 r_time.append(real_time)
                     
-            write_in_excel(worksheet,inst,instances[inst].split("\\")[-1],val,r_time)
+            write_in_excel(worksheet,len(instances)*k+inst,instances[inst].split("\\")[-1],val,r_time)
             
     try:
     
@@ -183,11 +185,12 @@ def run_CART(instances,depths):
     
 ALL_INSTANCES=["iris","IndiansDiabetes","banknote","balance-scale","monk1","monk2","monk3","Ionosphere","spambase","car_evaluation","biodeg"
                ,"seismic_bumps","Statlog_satellite","tic-tac-toe","wine"]
-BIG_INSTANCES=["magic04","default_credit","HTRU_2","letter_recognition","Statlog_shuttle"]
-instances=[DIR+i for i in BIG_INSTANCES[0:1]]
+BIG_INSTANCES=["magic04","default_credit","HTRU_2","letter_recognition","Statlog_shuttle","hand_posture"]
+instances=[DIR+i for i in ALL_INSTANCES]
 postprocessing=[0]
-depths = [3]
+depths = [2,3,4]
 timelimit=10*60
-sol,val, r_time=run_tests(instances,depths,postprocessing)
-#sol,val, r_time=run_CART(instances,depths)
+algo="CG"
+#sol,val, r_time=run_tests(instances,depths,postprocessing,algo)
+sol,val, r_time=run_CART(instances,depths)
 print(np.mean(val),np.min(val-np.mean(val)),np.mean(r_time)/60.0)

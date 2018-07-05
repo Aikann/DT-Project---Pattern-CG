@@ -8,7 +8,7 @@ Created on Tue Apr 10 13:44:53 2018
 from RMPSolver import add_column, solveRMP, create_new_master, display_prob_lite
 from nodes_external_management import give_solution_type, hash_pattern
 from PricingSolver import solve_pricing, avoid_method, init_pricing_probs
-from learn_tree_funcs import get_leaf_parents
+from learn_tree_funcs import get_leaf_parents, get_data_size, get_num_targets
 import time
 import matplotlib.pyplot as plt
 from heuristics import genpatterns_singlevalues, genpatterns_random, update_pool, genpatterns_random_trees
@@ -80,11 +80,11 @@ class BaP_Node:
                                 
         red_cost = float('+inf')
         
-        go_pricing, bad_pool = 0, False
+        go_pricing, bad_pool, loop = 0, False, 0
         
         interesting_leaves = [l for l in range(2**depth)]
         
-        while not convergence:
+        while not convergence and loop<10:
             
             c=time.time()
                                                 
@@ -139,11 +139,17 @@ class BaP_Node:
                                                 
                         go_pricing+=1
                         
+                        if get_data_size()>10000 or (get_num_targets()>8 and get_data_size()>2000):
+                            
+                            go_pricing=0
+                            loop+=1
+                        
                     else:
                         
                         patterns_to_be_added, bad_pool = update_pool(depth,self.prob,C_set,interesting_leaves)
                         
                         go_pricing=0
+                        loop=0
                 
                 print('Pool generation time: '+str(time.time()-a))
                 
@@ -208,7 +214,7 @@ class BaP_Node:
                     
                     #start=10*60 - a*60
                                                                                    
-            if not convergence:
+            if not convergence and loop<10:
                 
                 a=time.time()
                                                                 

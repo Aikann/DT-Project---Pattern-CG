@@ -269,7 +269,7 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
             
             if postp==2:
             
-                new_thresholds.extend(get_new_thresholds(l))
+                new_thresholds.extend(get_new_thresholds(l,postp))
                 
                 print(new_thresholds)
                 
