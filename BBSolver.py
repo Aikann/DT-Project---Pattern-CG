@@ -18,7 +18,7 @@ import copy
 
 chosen_method = "HORIZONTAL_SEARCH"
 
-def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_thresholds,postp,algo):
+def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_thresholds,postp,algo,timelimit):
     
     prob=create_new_master(inputdepth,patterns_set,master_thresholds,C_set)
     
@@ -173,7 +173,7 @@ def BBSolver(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_th
             
     a=time.time()
     
-    root_node.explore(30000,C_set)
+    root_node.explore(30000,C_set,timelimit)
     
     if root_node.solution_type == 'integer':
         

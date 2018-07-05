@@ -21,7 +21,7 @@ def main(argv):
         
     try:
        
-        opts, args = getopt.getopt(argv,"f:d:p:a:",["ifile=","depth=","postprocessing=","algorithm="])
+        opts, args = getopt.getopt(argv,"f:d:p:a:t:",["ifile=","depth=","postprocessing=","algorithm=","timelimit="])
 
     except getopt.GetoptError:
        
@@ -45,6 +45,10 @@ def main(argv):
             
             algo = arg
             
+        elif opt in ("-t","--timelimit"):
+            
+            timelimit = int(arg)
+            
     print('Initializing...')
             
     create_instance(inputfile)
@@ -59,16 +63,11 @@ def main(argv):
     
     print('Initialization done')
                     
-    return BBSolver(TARGETS, patterns_set, best_solution_value, inputdepth, C_set, master_thresholds,postp,algo), C_set
+    return BBSolver(TARGETS, patterns_set, best_solution_value, inputdepth, C_set, master_thresholds,postp,algo,timelimit), C_set
 
-CURDIR=os.getcwd()
-DIR=CURDIR+"\Instances\\"  
-#tree, C_set = main(["-f"+DIR+"chess.csv","-d 3","-p 2"])
-
-#score=test(tree,C_set,"IndiansDiabetestest.csv")
         
 
-def run_tests(instances,depths,postprocessing,algo):
+def run_tests(instances,depths,postprocessing,algo,tl):
         
     sol=[]
     val=[]
@@ -100,7 +99,7 @@ def run_tests(instances,depths,postprocessing,algo):
                 
                         a=time.time()
                         
-                        tree, C_set = main(["-f"+trainfile,"-d "+str(k),"-p "+str(p),"-a"+algo])
+                        tree, C_set = main(["-f"+trainfile,"-d "+str(k),"-p "+str(p),"-a"+algo,"-t"+str(tl)])
                         
                         real_time = time.time() - a
                         
@@ -182,7 +181,8 @@ def run_CART(instances,depths):
     return sol, val, r_time
     
     
-    
+CURDIR=os.getcwd()
+DIR=CURDIR+"\Instances\\"   
 ALL_INSTANCES=["iris","IndiansDiabetes","banknote","balance-scale","monk1","monk2","monk3","Ionosphere","spambase","car_evaluation","biodeg"
                ,"seismic_bumps","Statlog_satellite","tic-tac-toe","wine"]
 BIG_INSTANCES=["magic04","default_credit","HTRU_2","letter_recognition","Statlog_shuttle","hand_posture"]
@@ -191,6 +191,9 @@ postprocessing=[0]
 depths = [2,3,4]
 timelimit=10*60
 algo="CG"
-#sol,val, r_time=run_tests(instances,depths,postprocessing,algo)
-sol,val, r_time=run_CART(instances,depths)
-print(np.mean(val),np.min(val-np.mean(val)),np.mean(r_time)/60.0)
+
+
+
+#tree, C_set = main(["-f"+DIR+"iris.csv","-d 3","-p 0","-aCG","-t600"])
+#sol,val, r_time=run_tests(instances,depths,postprocessing,algo,timelimit)
+#sol,val, r_time=run_CART(instances,depths)

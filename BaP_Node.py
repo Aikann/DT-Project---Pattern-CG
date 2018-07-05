@@ -34,7 +34,7 @@ class BaP_Node:
         self.branch_index = branch_index #index of the variables
         self.master_thresholds = master_thresholds #set of triples
         
-    def explore(self,UB,C_set): #do CG until the master problem is solved
+    def explore(self,UB,C_set,timelimit): #do CG until the master problem is solved
         
         start=time.time()
         
@@ -198,7 +198,7 @@ class BaP_Node:
                 
                 #input()
                 
-            if time.time()-start>10*60:
+            if time.time()-start>timelimit:
                 
                 #a=input()
                 
