@@ -5,8 +5,8 @@ Created on Wed Apr 11 15:36:08 2018
 @author: Guillaume
 """
 
-from learn_tree_funcs import get_num_targets, get_left_leafs, get_right_leafs, get_leaf_parents, get_depth
-from learn_tree_funcs import get_num_features, get_data_size, get_min_value, get_max_value, get_feature_value, get_target
+from learn_tree_funcs import get_leaf_parents, get_depth
+from learn_tree_funcs import get_data_size
 import cplex
 
 

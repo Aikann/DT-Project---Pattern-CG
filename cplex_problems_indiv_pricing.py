@@ -5,10 +5,8 @@ Created on Wed Apr 25 09:58:57 2018
 @author: Guillaume
 """
 
-from learn_tree_funcs import get_left_leafs, get_right_leafs
 from learn_tree_funcs import get_num_features, get_data_size, get_feature_value, get_target, get_leaf_parents, get_depth
 import cplex
-import numpy as np
 
 def obtain_targets(T):
     
@@ -203,25 +201,6 @@ def create_rows_pricing(depth,leaf,C_set):
             row_right_sides.append(depth-1)
     
             row_senses = row_senses + "L"
-            
-    #TODO; modify the following constraint with the new C_set
-    """
-    for i in range(num_features):
-        
-        for v in range(len(C_set[j][i])):
-            
-            col_names = ["u_"+str(i)+"_"+str(h)+"_"+str(v) for h in range(depth)]
-            
-            col_values = [1 for h in range(depth)]
-            
-            row_names.append("constraint_10_" + str(i) +"_"+str(v))
-
-            row_values.append([col_names,col_values])
-    
-            row_right_sides.append(1)
-    
-            row_senses = row_senses + "L"
-    """            
         
     return row_names, row_values, row_right_sides, row_senses
     

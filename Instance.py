@@ -8,21 +8,24 @@ Created on Wed Apr 18 09:58:55 2018
 import regtrees2 as tr
 from learn_tree_funcs import transform_data, read_file, write_file, scale_data, get_num_features, get_feature_value, get_data_size, get_target, get_leaf_parents, get_sorted_feature_values
 from learn_tree_funcs import sget_children, get_left_node, get_right_node, obtain_targets2
-from nodes_external_management import init_rand_hash
-from BaP_Node import obtain_depth
+from utility import init_rand_hash
+from CG import obtain_depth
 from collections import Counter
 from pattern import pattern
 from cplex_problems_indiv_pricing import obtain_targets
-import numpy as np
 from heuristics import init_heur
 
-def post_files(rows,ID):
-    
-    df2=tr.df.iloc[rows]
-    
-    df2.to_csv('sub_p_'+str(ID)+'.csv',sep=',',index=False,header=False)
 
-def create_instance(inputfile,test=False,inputdepth=0):
+def create_instance(inputfile,test=False):
+    """ Create an instance from an input file
+    
+    Input:
+        inputfile (string): file to be read
+        test (bool): if True, return the dataframe (needed when testing)
+        
+    Output:
+        tr.df (DataFrame, optional): dataframe with the data
+    """
     
     read_file(inputfile)
    
@@ -42,6 +45,17 @@ def create_instance(inputfile,test=False,inputdepth=0):
         
         
 def create_first_solution(inputdepth):
+    """ Create the very first solution from a CART tree
+    
+    Input:
+        inputdepth (integer): maximum depth
+        
+    Output:
+        patterns_set (list of list of patterns): initial tree
+        master_thresholds (list of triples): set of index corresponding to C_set
+        TARGETS (list of floats): targets appearing in the problem
+        C_set (list of list of list of floats): full thresholds
+    """
     
     dt, TARGETS = tr.learnTrees_and_return_patterns(inputdepth)
 
@@ -121,6 +135,15 @@ def create_first_solution(inputdepth):
     
     
 def get_feature_and_thresholds(dt,depth):
+    """ Convert the thresholds from a CART tree to a list
+    
+    Input:
+        dt (DecisionTreeClassifier): CART decision tree
+        depth (integer): maximum depth of the tree
+        
+    Output:
+        master_thresholds (list of triples): set of index corresponding to C_set
+    """
     
     num_leafs = 2**depth
     
@@ -163,6 +186,15 @@ def get_feature_and_thresholds(dt,depth):
         
         
 def convert_thresholds_to_index(master_thresholds,C_set):
+    """ Convert the first version of master threshold into a new one with the correct index
+    
+    Input:
+        master_thresholds (list of triples): set of index corresponding to C_set
+        C_set (list of list of list of floats): full thresholds set
+        
+    Output:
+        none (works in place)
+    """
     
     for m in range(len(master_thresholds)):
         
@@ -180,6 +212,14 @@ def convert_thresholds_to_index(master_thresholds,C_set):
     
 
 def compute_C_set(depth):
+    """ Compute the whole threshold set
+    
+    Input:
+        depth (integer): maximum depth of the tree
+        
+    Output:
+        C_set (list of list of list of floats): full thresholds set
+    """
     
     num_features = get_num_features()
     
@@ -198,6 +238,17 @@ def compute_C_set(depth):
     return C_set
 
 def restricted_C_set(C_set,patterns_set,depth):
+    """ Compute the restricted thresholds set using homogeneous sampling (unused)
+    
+    Input:
+        C_set (list of list of list of floats): full thresholds set
+        patterns_set (list of list of patterns): initial tree
+        depth (integer): maximum depth of the tree
+        
+    Output:
+        new_C_set (list of list of list of floats): restricted thresholds set
+        new_MT (list of triples): set of index corresponding to C_set
+    """
     
     num_features = get_num_features()
     
@@ -282,7 +333,18 @@ def restricted_C_set(C_set,patterns_set,depth):
             
     return new_C_set, new_MT
 
-def restricted_C_set2(C_set,patterns_set,depth,algo): #compute the restricted C_set using information from CART trees
+def restricted_C_set2(C_set,patterns_set,depth): #compute the restricted C_set using information from CART trees
+    """ Compute the restricteds threshold set using CART trees
+    
+    Input:
+        C_set (list of list of list of floats): full thresholds set
+        patterns_set (list of list of patterns): initial tree
+        depth (integer): maximum depth of the tree
+        
+    Output:
+        new_C_set (list of list of list of floats): restricted thresholds set
+        new_MT (list of triples): set of index corresponding to C_set
+    """
     
     num_features = get_num_features()
     
@@ -294,7 +356,7 @@ def restricted_C_set2(C_set,patterns_set,depth,algo): #compute the restricted C_
     
     list_thr = [[] for j in range(2**depth-1)]
     
-    max_iter=300#int(300*(algo=='CG*')) + int(140*(algo=='CG'))
+    max_iter=300
     
     while stop<max_iter:
         
@@ -303,27 +365,15 @@ def restricted_C_set2(C_set,patterns_set,depth,algo): #compute the restricted C_
         dt, TARGETS = tr.learnTrees_and_return_patterns(depth,sample=count)
                 
         tree_thresholds = get_feature_and_thresholds(dt,depth)
-        
-        #print(tree_thresholds)
-        
+                
         convert_thresholds_to_index(tree_thresholds,C_set)
-        
-        #print(tree_thresholds)
-        
-        #input()
-        
+                        
         for j in range(2**depth -1):
-            
-            #♣if j==(2**(depth -1) -1):
-        
+                    
             triple = next(x for x in tree_thresholds if x[0]==j)
             
             i, v = triple[1], triple[2]
-            
-            #if C_set[j][i][v] not in new_C_set[j][i] and sum([len(new_C_set[j][i2]) for i2 in range(num_features)])<(100/(2**depth-1)):
-            
-                #new_C_set[j][i].append(C_set[j][i][v])
-                
+                                        
             if (i,v) not in list_thr[j]:
                 
                 list_thr[j].append((i,v))
@@ -405,40 +455,20 @@ def restricted_C_set2(C_set,patterns_set,depth,algo): #compute the restricted C_
     print('Unique values: '+str(sum([len(new_C_set[j2][z]) for j2 in range(len(C_set)) for z in range(num_features)])))
     
     print('Unique values at root node: '+str(sum([len(new_C_set[2**(depth-1) - 1][z]) for z in range(num_features)])))
-    
-    print(new_C_set)
-        
+            
     return new_C_set, new_MT
-        
-                    
-def empty_patterns(depth):
-    
-    dt, TARGETS = tr.learnTrees_and_return_patterns(depth)
-
-    tr.get_code()
-    
-    num_leafs = 2**depth
-    
-    num_nodes = num_leafs - 1
-        
-    C_set = compute_C_set(depth)
-    
-    patterns_set = [[] for l in range(num_leafs)]
-    
-    for l in range(num_leafs):
-        
-        F = [(0,0) for h in range(depth)]
-        
-        p = pattern(l,F,0,[],0)
-        
-        patterns_set[l].append(p)
-        
-    master_thresholds = [(j,0,0) for j in range(num_nodes)]
-    
-    return patterns_set, master_thresholds, TARGETS, C_set
 
                 
 def initialize_global_values(TARGETS,inputdepth):
+    """ Give important global values to some modules
+    
+    Input:
+        TARGETS (list of floats): targets appearing in the problem
+        inputdepth (integer): maximum depth of the tree
+        
+    Output:
+        none
+    """
     
     TARGETS.sort()
     obtain_depth(inputdepth) #give depth to the BaP_Node module

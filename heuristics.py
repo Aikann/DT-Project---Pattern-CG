@@ -8,12 +8,18 @@ Created on Tue May 29 09:47:19 2018
 from pattern import pattern
 from learn_tree_funcs import get_leaf_parents, get_num_features, get_data_size
 import random
-from nodes_external_management import hash_pattern
-import matplotlib.pyplot as plt
-import time
+from utility import hash_pattern
 import numpy as np
 
 def init_heur():
+    """ Initialize global random numbers
+    
+    Input:
+        none
+        
+    Output:
+        none
+    """
     
     global count
     global random_numbers
@@ -29,9 +35,18 @@ def init_heur():
 """ GAMMA METHOD """
 
 
-
-
 def genpatterns_singlevalues(depth,master_prob,C_set): #generate a pool of patterns using individual dual values
+    """ Compute patterns based on the gamma's (unused)
+    
+    Input:
+        depth (integer): maximum depth of the tree
+        master_prob (Cplex problem): already solved master problem
+        C_set (list of list of list of floats): restricted thresholds set
+        
+    Output:
+        patterns_to_be_added (list of patterns): patterns to be included in the master
+        is_zero (bool): boolean indicating if any interesting pattern has been found
+    """
     
     patterns_to_be_added, red_costs = [], []
     
@@ -52,15 +67,21 @@ def genpatterns_singlevalues(depth,master_prob,C_set): #generate a pool of patte
         red_costs.append(compute_rc(depth,p,master_prob))
         
     print('Max red cost in the pool',max(red_costs))
-    """
-    plt.figure(2)
-    from BaP_Node import count_iter
-    plt.scatter(count_iter,max(red_costs),color='k')
-    plt.pause(0.0001)
-    """   
+  
     return patterns_to_be_added, max(red_costs)<0.01
 
 def get_Fvector_singlevalues(depth,master_prob,C_set,leaf):
+    """ Compute the decision splits of a given path using the gamma's (unused)
+    
+    Input:
+        depth (integer): maximum depth of the tree
+        master_prob (Cplex problem): already solved master problem
+        C_set (list of list of list of floats): restricted thresholds set
+        leaf (integer): leaf of the path
+        
+    Output:
+        F (list of tuples): list of decision splits along the path
+    """
     
     num_leafs = 2**depth
     num_nodes = num_leafs - 1
@@ -102,6 +123,18 @@ def get_Fvector_singlevalues(depth,master_prob,C_set,leaf):
 
 
 def genpatterns_random(depth,master_prob,C_set,interesting_leaves):
+    """ Compute patterns based on randomness
+    
+    Input:
+        depth (integer): maximum depth of the tree
+        master_prob (Cplex problem): already solved master problem
+        C_set (list of list of list of floats): restricted thresholds set
+        interesting_leaves (list of integers): leaves to be considered
+        
+    Output:
+        patterns_to_be_added (list of patterns): patterns to be included in the master
+        is_zero (bool): boolean indicating if any interesting pattern has been found
+    """
     
     global count
     global sorted_patterns
@@ -145,21 +178,22 @@ def genpatterns_random(depth,master_prob,C_set,interesting_leaves):
     red_costs.sort(reverse=True)
     
     print('Max red cost in the pool',max(red_costs))
-    
-    #red_costs.sort(reverse=True)
-    
-    #for i in range(50):
-        
-        #print(red_costs[i])
-    """    
-    plt.figure(2)
-    from BaP_Node import count_iter
-    plt.scatter(count_iter,max(red_costs),color='k')
-    plt.pause(0.0001)
-    """                  
+                     
     return [sorted_patterns[x] for x in range(100) if red_costs[x]>0.001], max(red_costs) < 0.01
 
 def update_pool(depth,master_prob,C_set,interesting_leaves):
+    """ Compute patterns based on randomness and using the previous pool of columns
+    
+    Input:
+        depth (integer): maximum depth of the tree
+        master_prob (Cplex problem): already solved master problem
+        C_set (list of list of list of floats): restricted thresholds set
+        interesting_leaves (list of integers): leaves to be considered
+        
+    Output:
+        patterns_to_be_added (list of patterns): patterns to be included in the master
+        is_zero (bool): boolean indicating if any interesting pattern has been found
+    """
     
     global count
     global sorted_patterns
@@ -212,23 +246,21 @@ def update_pool(depth,master_prob,C_set,interesting_leaves):
     sorted_H = [x for _,x in sorted(zip(red_costs,H),reverse=True)]
     red_costs.sort(reverse=True)
     
-    print('Max red cost in the pool',max(red_costs))
-    
-    #red_costs.sort(reverse=True)
-    
-    #for i in range(50):
-        
-        #print(red_costs[i])
-    """    
-    plt.figure(2)
-    from BaP_Node import count_iter
-    plt.scatter(count_iter,max(red_costs),color='k')
-    plt.pause(0.0001)
-    """              
+    print('Max red cost in the pool',max(red_costs))            
 
     return [sorted_patterns[p] for p in range(int(nbr_it/2)) if p<len(sorted_patterns) and red_costs[p]>0.001], max(red_costs) < 0.01
 
 def gen_Fvector_random(depth,C_set,l):
+    """ Compute the decision splits of a given path using randomness (unused)
+    
+    Input:
+        depth (integer): maximum depth of the tree
+        C_set (list of list of list of floats): restricted thresholds set
+        l (integer): leaf of the path
+        
+    Output:
+        F (list of tuples): list of decision splits along the path
+    """
     
     global count
     
@@ -261,6 +293,17 @@ def gen_Fvector_random(depth,C_set,l):
 
 
 def genpatterns_random_trees(depth,master_prob,C_set):
+    """ Compute patterns based on randomness using a full tree structure
+    
+    Input:
+        depth (integer): maximum depth of the tree
+        master_prob (Cplex problem): already solved master problem
+        C_set (list of list of list of floats): restricted thresholds set
+        
+    Output:
+        patterns_to_be_added (list of patterns): patterns to be included in the master
+        is_zero (bool): boolean indicating if any interesting pattern has been found
+    """
 
     global count
     global sorted_patterns
@@ -301,22 +344,20 @@ def genpatterns_random_trees(depth,master_prob,C_set):
     red_costs.sort(reverse=True)
     
     print('Max red cost in the pool',max(red_costs))
-    
-    #red_costs.sort(reverse=True)
-    
-    #for i in range(50):
-        
-        #print(red_costs[i])
-    """    
-    plt.figure(2)
-    from BaP_Node import count_iter
-    plt.scatter(count_iter,max(red_costs),color='k')
-    plt.pause(0.0001)
-    """                  
+                    
     return [sorted_trees[tr][pat] for tr in range(20) for pat in range(2**depth) if red_costs[tr]>0.001], max(red_costs) < -4
 
 
 def gen_tree_random(depth,C_set):
+    """ Compute a random tree
+    
+    Input:
+        depth (integer): maximum depth of the tree
+        C_set (list of list of list of floats): restricted thresholds set
+        
+    Output:
+        T (list of list of tuples): list of F_vector (decision splits) corresponding to the paths
+    """
     
     global count
     
@@ -359,7 +400,18 @@ def gen_tree_random(depth,C_set):
     return T
 
 
-def compute_rc(depth,p,master_prob,theta):
+def compute_rc(depth,p,master_prob,beta):
+    """ Compute the reduced cost of a given path
+    
+    Input:
+        depth (integer): maximum depth of the tree
+        p (pattern): path
+        master_prob (Cplex problem): already solved master problem
+        beta (list of floats): dual values beta
+        
+    Output:
+        rc (float): reduced cost of the path
+    """
     
     l=p.leaf
     
@@ -373,6 +425,6 @@ def compute_rc(depth,p,master_prob,theta):
     
         rc -= master_prob.solution.get_dual_values("constraint_3_"+str(l)+"_"+str(j)+"_"+str(i)+"_"+str(v))
                 
-    rc -= np.sum(theta[p.R])
+    rc -= np.sum(beta[p.R])
         
     return rc

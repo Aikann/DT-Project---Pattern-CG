@@ -5,8 +5,11 @@
 Guillaume Crognier, Ecole polytechnique (Paris, France), guillaume.crognier@polytechnique.edu
 Murat Firat, Eindhoven University of Technology (Eindhoven, The Netherlands), m.firat@tue.nl
 Adriana F. Gabor, United Arab Emirates University (Al Ain, United Arab Emirates), adriana.gabor@uaeu.ac.ae
-Cor Hurkens, Eindhoven University of Technology (Eindhoven, The Netherlands), c.a.j.hurkens@tue.nl
 Yingqian Zhang, Eindhoven University of Technology (Eindhoven, The Netherlands), yqzhang@tue.nl
+
+"""Acknowledgement"""
+
+Cor Hurkens, Eindhoven University of Technology (Eindhoven, The Netherlands)
 
 """Developer"""
 
@@ -14,7 +17,7 @@ Guillaume Crognier, Ecole polytechnique (Paris, France), guillaume.crognier@poly
 
 """Requirements"""
 
-Python 2.7 and a full version of Cplex have to be installed (should work on Python 3 with possibly minor changes).
+Python 2.7 and a full version of Cplex have to be installed (should work on Python 3.x with possibly minor changes).
 The cplex module in Python has to be installed with the full version of cplex (see https://www.ibm.com/support/knowledgecenter/SSSA5P_12.7.1/ilog.odms.cplex.help/CPLEX/GettingStarted/topics/set_up/Python_setup.html).
 
 """Tested machine"""
@@ -54,10 +57,10 @@ You can also run it from a command line if you add the following code:
 
 -d (int) max depth of the tree.
 
--p (int) Post-processing method (deprecated). Leads to overfitting trees. 0 means no post-processing. If you want to use it anyway, you may need
-	 additional requirements (deprecated but still working, if you want to use it contact guillaume.crognier@polytechnique.edu).
+-p (int) Post-processing method (unused). Leads to overfitting trees. 0 means no post-processing. If you want to use it anyway, you may need
+	 additional requirements (if you want to use it contact guillaume.crognier@polytechnique.edu).
 
--a (string) Type of algorithm. Should be "CG". If you are interesting in post-processing, it could be "CG*" or "CART*".
+-a (string) Type of algorithm. Should be "CG" in this version. If you are interesting in post-processing, you may change this.
 
 -t (int) Time limit, in seconds.
 
@@ -67,7 +70,7 @@ tree is a list of patterns (see pattern.py). Contains all the information about 
 
 C_set is a 3D list containing the thresholds used in the algorithm.
 
-sol and val contain some basic results.
+sol contains some basic results.
 
 """More information"""
 

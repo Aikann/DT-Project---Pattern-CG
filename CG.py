@@ -5,17 +5,23 @@ Created on Tue Apr 10 13:44:53 2018
 @author: Guillaume
 """
 
-from RMPSolver import add_column, solveRMP, create_new_master, display_prob_lite
-from nodes_external_management import give_solution_type, hash_pattern
+from RMPSolver import add_column, solveRMP
+from utility import give_solution_type, hash_pattern
 from PricingSolver import solve_pricing, avoid_method, init_pricing_probs
 from learn_tree_funcs import get_leaf_parents, get_data_size, get_num_targets
 import time
-import matplotlib.pyplot as plt
-from heuristics import genpatterns_singlevalues, genpatterns_random, update_pool, genpatterns_random_trees
-import numpy as np
+from heuristics import genpatterns_random, update_pool
 
 
 def obtain_depth(d):
+    """ Obtain the global parameter depth
+    
+    Input:
+        d (integer): maximum depth
+        
+    Output:
+        none
+    """
     
     global depth
     depth=d
@@ -24,6 +30,22 @@ def obtain_depth(d):
 class BaP_Node:
     
     def __init__(self,patterns_set,prob,ID,parent,H,branch_var,branch_index,master_thresholds):
+        """ Construct a node in the branch and price tree. Eventually there is not any BaP in our algorithm, but the structure 
+        can still be used.
+    
+        Input:
+            patterns_set (list of list of patterns): patterns available for the master problem
+            prob (Cplex problem): master problem at this node
+            ID (string): ID of the node
+            parent (BaP_Node): parent node in the BaP tree
+            H (list of list of floats): hash table corresponding to the patterns
+            branch_var (unused)
+            branch_index (unused)
+            master_thresholds (list of triples): set of index corresponding to C_set
+            
+        Output:
+            self (BaP_Node)
+        """
         
         self.prob=prob #cplex problem
         self.patterns_set=patterns_set #list containing lists of sets for each leaf
@@ -34,45 +56,26 @@ class BaP_Node:
         self.branch_index = branch_index #index of the variables
         self.master_thresholds = master_thresholds #set of triples
         
-    def explore(self,UB,C_set,timelimit): #do CG until the master problem is solved
+    def explore(self,C_set,timelimit): #do CG until the master problem is solved
+        """ Run CG until optimaity has been proven or time limit has been reached
+    
+        Input:
+            C_set (list of list of list of floats): restricted thresholds set
+            timelimit (integer): time limit in seconds
+            
+        Output:
+            none (works in place such that all the information is contained in self)       
+        """
         
         start=time.time()
-        
-        """
-        plt.figure(1)
-        
-        plt.ylim(ymax=650)
-        
-        plt.ylim(ymin=550)
-        
-        plt.title("Master objective value as a function of number of iterations")
-        
-        plt.figure(2)
-        
-        plt.title("Reduced costs as a function of number of iterations")
-        
-        plt.figure(3)
-        
-        plt.title("Time to solve master (s) as a function of number of columns")
-               
-        plt.show()
-        """                           
+                                
         convergence = False
         
         first_time = True
         
         avoid_method(depth)
-        
-        #self.prob.write('here.lp','lp')
-                        
+                                
         solveRMP(self.prob)
-                                                                        
-        if give_solution_type(self.prob) == 'infeasible':
-                        
-            self.solution_type = 'infeasible'
-            self.solution_value = float('+inf')
-            
-            return
         
         global count_iter
         
@@ -93,16 +96,7 @@ class BaP_Node:
             t=time.time()-c
                                     
             print(count_iter,"Time MP :",t)
-            
-            """
-            plt.figure(3)
-            
-            plt.scatter(count_iter,t,color='r')
-            
-            plt.pause(0.0001)
-            """                                   
-            pricing_method = 1
-            
+                                                        
             if (go_pricing>1 or red_cost<0.001) and ((not first_time) or (time.time()-start<8.5*60)):# or count_iter%15==0 or(count_iter>500 and count_iter%5==0):
                 
                 if first_time:
@@ -116,8 +110,7 @@ class BaP_Node:
                 b=time.time()
                                     
                 patterns_to_be_added, convergence, red_cost, interesting_leaves = solve_pricing(depth,
-                self.prob,self.patterns_set,self.branch_var,
-                self.branch_index,self.ID,self.master_thresholds,C_set,pricing_method)
+                self.prob,self.master_thresholds,C_set)
             
                 print(count_iter,"Time pricing :",time.time()-b)
                 
@@ -127,48 +120,25 @@ class BaP_Node:
                 
                 a=time.time()
                 
-                if count_iter<0:
+                if count_iter==1 or bad_pool:
                 
-                    patterns_to_be_added, go_pricing = genpatterns_random_trees(depth,self.prob,C_set)
+                    patterns_to_be_added, bad_pool = genpatterns_random(depth,self.prob,C_set,interesting_leaves)
+                                            
+                    go_pricing+=1
                     
-                else:
-                
-                    if count_iter==1 or bad_pool:
-                    
-                        patterns_to_be_added, bad_pool = genpatterns_random(depth,self.prob,C_set,interesting_leaves)
-                                                
-                        go_pricing+=1
-                        
-                        if get_data_size()>10000 or (get_num_targets()>8 and get_data_size()>2000):
-                            
-                            go_pricing=0
-                            loop+=1
-                        
-                    else:
-                        
-                        patterns_to_be_added, bad_pool = update_pool(depth,self.prob,C_set,interesting_leaves)
+                    if get_data_size()>10000 or (get_num_targets()>8 and get_data_size()>2000):
                         
                         go_pricing=0
-                        loop=0
-                
-                print('Pool generation time: '+str(time.time()-a))
-                
-            """   
-            plt.figure(1)
+                        loop+=1
+                    
+                else:
+                    
+                    patterns_to_be_added, bad_pool = update_pool(depth,self.prob,C_set,interesting_leaves)
+                    
+                    go_pricing=0
+                    loop=0
             
-            plt.ylim(ymax=650)
-                
-            plt.scatter(count_iter,self.prob.solution.get_objective_value(),color='g')
-            
-            plt.pause(0.0001)
-            """
-            if float(self.prob.solution.get_objective_value()) >= UB: #check if it is useful to continue
-                
-                self.solution_value = self.prob.solution.get_objective_value()
-                self.solution = self.prob.solution.get_values()
-                self.solution_type = give_solution_type(self.prob)
-                
-                return
+            print('Pool generation time: '+str(time.time()-a))
             
             if count_iter%10==0:
             
@@ -176,43 +146,13 @@ class BaP_Node:
             
                 print("Number of patterns "+str(sum([len(self.patterns_set[l]) for l in range(len(self.patterns_set))])))
                 
-                #check_unicity(self.segments_set)
-                        
-                #for p in self.patterns_set[0]:
-                                               
-                    #print(p)
-                    
-                #print(patterns_to_be_added[0])
-                
-                #print("Master thresholds",self.master_thresholds)
-                
-                #display_prob_lite(self.prob,"dual")
-                
-                #print(self.prob.solution.get_reduced_costs())
-                
-                #for i in self.prob.variables.get_names():
-                
-                    #print(i,self.prob.solution.get_reduced_costs(i))
-                                                
-                #print(self.prob.variables.get_num())
-                
-                #input()
-                
             if time.time()-start>timelimit:
-                
-                #a=input()
-                
-                #if a =="stop":
                     
-                    self.solution_value = self.prob.solution.get_objective_value()
-                    self.solution = self.prob.solution.get_values()
-                    self.solution_type = give_solution_type(self.prob)
-                    
-                    return
+                self.solution_value = self.prob.solution.get_objective_value()
+                self.solution = self.prob.solution.get_values()
+                self.solution_type = give_solution_type(self.prob)
                 
-                #else:
-                    
-                    #start=10*60 - a*60
+                return
                                                                                    
             if not convergence and loop<10:
                 
@@ -223,13 +163,21 @@ class BaP_Node:
                 print('Time add columns: '+str(time.time()-a))
                                                                                 
             count_iter=count_iter+1
-            
         
         self.solution_value = self.prob.solution.get_objective_value()
         self.solution = self.prob.solution.get_values()
         self.solution_type = give_solution_type(self.prob)
         
     def add_patterns(self,patterns_to_add,safe_insertion=False):
+        """ Add patterns to the master
+    
+        Input:
+            patterns_to_add (list of patterns): patterns to be added in the master
+            safe_insertion (bool): if true, this function checks that the pattern does not already exist thanks to a hash table
+            
+        Output:
+            none (works in place)
+        """
         
         num_nodes = len(self.patterns_set) - 1
                         
@@ -280,36 +228,4 @@ class BaP_Node:
                         if (j,i,v) not in self.master_thresholds:
                             
                             self.master_thresholds.append((j,i,v))
-                        
-    def clean(self,C_set):
-        
-        new_patterns_set = [[] for l in range(len(self.patterns_set))]
-        
-        names = np.array(self.prob.variables.get_names())
-        
-        values = np.array(self.prob.solution.get_values())
-        
-        idx = np.where(values > 0.001)[0]
-                
-        names, values = names[idx], values[idx]
-                
-        for n in names:
-                        
-            if "pattern" in n:
-                
-                tmp = n.split("_")
-                
-                l = int(tmp[-1])
-                
-                p = int(tmp[-2])
-                
-                new_patterns_set[l].append(self.patterns_set[l][p])
-                
-        self.patterns_set = new_patterns_set
-        
-        self.prob = create_new_master(depth,self.patterns_set,self.master_thresholds,C_set)
-        
-        self.prob.write('here.lp','lp')
-        
-        return
                 
