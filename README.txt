@@ -52,7 +52,7 @@ You can also run it from a command line if you add the following code:
 
 """Parameters of the main function"""
 
--f (string) file name. The file should be in the "Instances" folder and should correspond to an usual csv format, separated
+-f (string) file name. The file should be in the "Instances" folder and should correspond to a usual csv format, separated
    by ";" or by columns (see the examples in the folder).
 
 -d (int) max depth of the tree.
