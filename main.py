@@ -96,8 +96,10 @@ def run_tests(instances,depths,postprocessing,algo,tl):
     worksheet = workbook.add_worksheet()
     worksheet.write(0,1,"Instance")
     worksheet.write(0,2,"Mean")
-    worksheet.write(0,3,"Worst")
-    worksheet.write(0,4,"Time")
+    worksheet.write(0,3,"Min")
+    worksheet.write(0,4,"Max")
+    worksheet.write(0,5,"Std")
+    worksheet.write(0,6,"Time")
     
     sol=[]
     
@@ -116,15 +118,17 @@ def run_tests(instances,depths,postprocessing,algo,tl):
                                                 
                         trainfile=trainfiles[nbr_test]
                         testfile=testfiles[nbr_test]
+                        
+                        trainfile=instances[inst]+".csv"
                 
                         a=time.time()
                         
-                        tree, C_set = main(["-f"+trainfile,"-d "+str(k),"-p "+str(p),"-a"+algo,"-t"+str(tl)])
+                        (tree, LP_value), C_set = main(["-f"+trainfile,"-d "+str(k),"-p "+str(p),"-a"+algo,"-t"+str(tl)])
                         
                         real_time = time.time() - a
                         
                         score=test(tree,C_set,testfile)
-                        
+                                                                        
                         sol.append((instances[inst].split("\\")[-1],k,nbr_test,score,p,real_time))
                         
                         val.append(score)
@@ -154,7 +158,9 @@ def write_in_excel(worksheet,count,name,val,r_time):
     worksheet.write(count+1,1,name)
     worksheet.write(count+1,2,str(100*round(np.mean(val),3)))
     worksheet.write(count+1,3,str(100*round(np.min(val),3)))
-    worksheet.write(count+1,4,str(round(np.mean(r_time),2)))
+    worksheet.write(count+1,4,str(100*round(np.max(val),3)))
+    worksheet.write(count+1,5,str(100*round(np.std(val),3)))
+    worksheet.write(count+1,6,str(round(np.mean(r_time),2)))
     
 def run_CART(instances,depths):
     """ Run testing method with CART and write it in a xlsx file
@@ -186,7 +192,7 @@ def run_CART(instances,depths):
             val=[]
             r_time=[]
                 
-            trainfiles, testfiles = create_train_and_test(instances[inst]+".csv",1,DIR)
+            trainfiles, testfiles = create_train_and_test(instances[inst]+".csv",5,DIR)
             
             for nbr_test in range(len(testfiles)):
                                             
@@ -227,7 +233,8 @@ DIR=CURDIR+"\Instances\\"
 ALL_INSTANCES=["iris","IndiansDiabetes","banknote","balance-scale","monk1","monk2","monk3","Ionosphere","spambase","car_evaluation","biodeg"
                ,"seismic_bumps","Statlog_satellite","tic-tac-toe","wine"]
 BIG_INSTANCES=["magic04","default_credit","HTRU_2","letter_recognition","Statlog_shuttle","hand_posture"]
-instances=[DIR+i for i in ALL_INSTANCES[13:15]]
+CPAIOR_INSTANCES=["iris","IndiansDiabetes","car_evaluation","bank_conv"]
+instances=[DIR+i for i in ALL_INSTANCES]
 postprocessing=[0]
 depths = [2]
 timelimit=10*60
@@ -235,6 +242,6 @@ algo="CG"
 
 
 
-final_tree, C_set = main(["-f"+DIR+"iris.csv","-d 2","-p 0","-aCG","-t600"])
-#sol=run_tests(instances,depths,postprocessing,algo,timelimit)
+#final_tree, C_set = main(["-f"+DIR+"iris.csv","-d 2","-p 0","-aCG","-t600"])
+sol=run_tests(instances,depths,postprocessing,algo,timelimit)
 #sol=run_CART(instances,depths)

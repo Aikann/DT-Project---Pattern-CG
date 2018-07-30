@@ -41,11 +41,11 @@ def tree(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_thresh
     a=time.time()
     
     root_node.explore(C_set,timelimit)
-    
+        
     if root_node.solution_type == 'integer':
         
         print('Integer for LP')
-    
+            
     print("Full time : "+str(time.time()-a))
     
     print("Upper bound at root node : "+str(root_node.prob.solution.get_objective_value()))
@@ -54,6 +54,8 @@ def tree(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_thresh
     
     UB = root_node.prob.solution.get_objective_value()
     
+    LP_value=UB
+    
     if round(UB) - 1e-5 <= UB <= round(UB) + 1e-5:
         
         UB = int(round(UB))
@@ -61,6 +63,8 @@ def tree(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_thresh
     else:
         
         UB = int(UB)
+        
+    if root_node.solution_type != 'integer':
     
         for i in root_node.prob.variables.get_names():
         
@@ -82,6 +86,6 @@ def tree(TARGETS,patterns_set,best_solution_value,inputdepth,C_set,master_thresh
         
         final_tree.append(next(root_node.patterns_set[leaf][pat] for pat in range(len(root_node.patterns_set[leaf])) if float(root_node.prob.solution.get_values("pattern_"+str(pat)+"_"+str(leaf)))>=0.99))
 
-    return final_tree
+    return final_tree, LP_value
     
     

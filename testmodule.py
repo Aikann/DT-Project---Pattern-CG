@@ -24,7 +24,7 @@ def test(tree,C_set,testfile):
     
     depth = int(np.log2(len(tree)))
     
-    create_instance(testfile,test=True,inputdepth=depth)
+    create_instance(testfile,test=True)
             
     for p in tree:
         
