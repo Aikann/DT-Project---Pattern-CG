@@ -97,7 +97,7 @@ class BaP_Node:
                                     
             print(count_iter,"Time MP :",t)
                                                         
-            if (go_pricing>1 or red_cost<0.001) and ((not first_time) or (time.time()-start<8.5*60)):# or count_iter%15==0 or(count_iter>500 and count_iter%5==0):
+            if (go_pricing>1 or red_cost<0.001) and ((not first_time) or (time.time()-start<0.85*timelimit)):# or count_iter%15==0 or(count_iter>500 and count_iter%5==0):
                 
                 if first_time:
                     
@@ -126,7 +126,7 @@ class BaP_Node:
                                             
                     go_pricing+=1
                     
-                    if get_data_size()>10000 or (get_num_targets()>8 and get_data_size()>2000):
+                    if get_data_size()>9999:
                         
                         go_pricing=0
                         loop+=1

@@ -112,15 +112,13 @@ def run_tests(instances,depths,postprocessing,algo,tl):
                 val=[]
                 r_time=[]
                     
-                trainfiles, testfiles = create_train_and_test(instances[inst]+".csv",1,DIR)
+                trainfiles, testfiles = create_train_and_test(instances[inst]+".csv",5,DIR)
                 
                 for nbr_test in range(len(testfiles)):
                                                 
                         trainfile=trainfiles[nbr_test]
                         testfile=testfiles[nbr_test]
-                        
-                        trainfile=instances[inst]+".csv"
-                
+                                        
                         a=time.time()
                         
                         (tree, LP_value), C_set = main(["-f"+trainfile,"-d "+str(k),"-p "+str(p),"-a"+algo,"-t"+str(tl)])
@@ -231,12 +229,12 @@ def run_CART(instances,depths):
 CURDIR=os.getcwd()
 DIR=CURDIR+"\Instances\\"   
 ALL_INSTANCES=["iris","IndiansDiabetes","banknote","balance-scale","monk1","monk2","monk3","Ionosphere","spambase","car_evaluation","biodeg"
-               ,"seismic_bumps","Statlog_satellite","tic-tac-toe","wine"]
+               ,"seismic_bumps","Statlog_satellite","wine"]
 BIG_INSTANCES=["magic04","default_credit","HTRU_2","letter_recognition","Statlog_shuttle","hand_posture"]
 CPAIOR_INSTANCES=["iris","IndiansDiabetes","car_evaluation","bank_conv"]
-instances=[DIR+i for i in ALL_INSTANCES]
+instances=[DIR+i for i in ALL_INSTANCES[10:11]]
 postprocessing=[0]
-depths = [2]
+depths = [3]
 timelimit=10*60
 algo="CG"
 
